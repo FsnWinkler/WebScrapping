@@ -6,7 +6,7 @@ import pandas as pd
 import pymongo
 from datetime import datetime
 from pyyoutube import Api
-from apiclient.discovery import build
+from googleapiclient.discovery import build
 
 
 
@@ -109,10 +109,43 @@ if __name__ == "__main__":
 
     youtube = build('youtube', 'v3', developerKey=api_key)
     api = Api(api_key=api_key)
+    print(api.get_i18n_regions())
 
-    video_by_chart = api.get_videos_by_chart(chart="mostPopular", region_code="DE", count=5, category_id="23")
+    video_by_chart = api.get_videos_by_chart(chart="mostPopular", region_code="de", count=5, category_id="24")
     ID = []
-    # print(video_by_chart.items)
+    # category list of IDs
+    # 1 - Film & Animation
+    # 2 - Autos & Vehicles
+    # 10 - Music
+    # 15 - Pets & Animals
+    # 17 - Sports
+    # 18 - Short
+    # 19 - Travel & Events
+    # 20 - Gaming
+    # 21 - Videoblogging
+    # 22 - People & Blogs
+    # 23 - Comedy
+    # 24 - Entertainment
+    # 25 - News & Politics
+    # 26 - Howto & Style
+    # 27 - Education
+    # 28 - Science & Technology
+    # 29 - Nonprofits & Activism
+    # 30 - Movies
+    # 31 - Anime / Animation
+    # 32 - Action / Adventure
+    # 33 - Classics
+    # 34 - Comedy
+    # 35 - Documentary
+    # 36 - Drama
+    # 37 - Family
+    # 38 - Foreign
+    # 39 - Horror
+    # 40 - Sci - Fi / Fantasy
+    # 41 - Thriller
+    # 42 - Shorts
+    # 43 - Shows
+    # 44 - Trailers
     for i in video_by_chart.items:
         print(i.id)
         ID.append(i.id)
@@ -120,5 +153,5 @@ if __name__ == "__main__":
 
 
 
-    for i in range(0,5):
-        ScrapComment("https://www.youtube.com/watch?v={}".format(ID[i]))
+    # for i in range(0,5):
+    #     ScrapComment("https://www.youtube.com/watch?v={}".format(ID[i]))
