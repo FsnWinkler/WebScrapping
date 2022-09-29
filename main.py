@@ -7,12 +7,16 @@ import pymongo
 from datetime import datetime
 from pyyoutube import Api
 from googleapiclient.discovery import build
+from dotenv import load_dotenv
+import os
+
+
 
 
 
 def connect_db(sorted_data):
     cluster = pymongo.MongoClient(
-        "mongodb+srv://admin:JyggcLIE4DGsQtu8@cluster0.0lwnskf.mongodb.net/?retryWrites=true&w=majority")
+        os.getenv("db_key"))
     db = cluster["test"]
     print(db.list_collection_names())
     isInList = False#url[32:] in db.list_collection_names()
@@ -105,7 +109,9 @@ def ScrapComment(url):
 
 
 if __name__ == "__main__":
-    api_key = "AIzaSyBR6ynnF9j7DF1vhgJB04gyOOx4JYthMBg"  # Replace this dummy api key with your own.
+    load_dotenv()
+    api_key = os.getenv("api_key")
+
 
     youtube = build('youtube', 'v3', developerKey=api_key)
     api = Api(api_key=api_key)
