@@ -9,6 +9,7 @@ from pyyoutube import Api
 from googleapiclient.discovery import build
 from dotenv import load_dotenv
 import os
+import re
 
 
 
@@ -16,6 +17,7 @@ import os
 
 def connect_db(sorted_data):
     cluster = pymongo.MongoClient(
+        #"mongodb+srv://admin:JyggcLIE4DGsQtu8@cluster0.0lwnskf.mongodb.net/?retryWrites=true&w=majority")
         os.getenv("db_key"))
     db = cluster["test"]
     print(db.list_collection_names())
@@ -25,8 +27,8 @@ def connect_db(sorted_data):
     if isInList:
         print("record already here!")
     else:
-        collection = db["comments"]
-        collection.insert_many(sorted_data.to_dict("records")[:10])
+        collection = db["timestamp"]
+        collection.insert_many(sorted_data.to_dict("records"))
         print("succsessfully inserted  into database")
 
 
@@ -54,8 +56,9 @@ def ScrapComment(url):
         # fix the time sleep value according to your network connection
         time.sleep(1)
         prev_h +=200
+        print(prev_h)
 
-        if prev_h >= 6000:
+        if prev_h >= 6000: #6000 for top coments
             break
 
 
@@ -65,9 +68,20 @@ def ScrapComment(url):
     title = title_text_div and title_text_div.text
 
 
-    comment_div = soup.select("#content #content-text", limit=50)
-    like_div = soup.select("#toolbar #vote-count-left", limit=50)
-    author_div = soup.select("#header-author #author-text", limit=50)
+    comment_div = soup.select("#content #content-text") #limit=50 for only top comments
+    like_div = soup.select("#toolbar #vote-count-left")
+    author_div = soup.select("#header-author #author-text")
+
+    timestamp_array = []
+    comment_div_array = [x.text for x in comment_div]
+    for item in comment_div_array:
+        timestamp = re.findall("[0-9]+[0-9]+[:]+[0-9]+[0-9]" and "[0-9]+[:]+[0-9]+[0-9]", item)
+        if timestamp:
+            timestamp_array.append(timestamp[0])
+        else:
+            timestamp_array.append(None)
+
+
 
 
     like_div_stripped = []
@@ -82,17 +96,19 @@ def ScrapComment(url):
         final_item = new_item.replace(" ", "")
         author_div_stripped.append(str(final_item))
 
-    data = pd.DataFrame({"Likes": like_div_stripped, "Comment": [x.text for x in comment_div], "Author": author_div_stripped, "URL": url, "Title": title})
+    data = pd.DataFrame({"Likes": like_div_stripped, "Comment": comment_div_array, "Author": author_div_stripped, "URL": url, "Title": title, "Timestamp": timestamp_array})
     #print(data)
 
     sorted_data = data.sort_values(by="Likes", ascending=False)
     #print(sorted_data[0:10])
 
+    timestamp_df = data.loc[data['Timestamp'].notnull()]
+
     end_time = datetime.now()
     print(end_time - start_time)
 
 
-    connect_db(sorted_data)
+    connect_db(timestamp_df)
     # print(sorted_data.to_json())
     # print(sorted_data.to_dict("records"))
     # print(sorted_data.to_dict("index"))
@@ -155,7 +171,7 @@ if __name__ == "__main__":
     for i in video_by_chart.items:
         print(i.id)
         ID.append(i.id)
-    #connect_db("https://www.youtube.com/watch?v={}".format(ID[0]))
+    ScrapComment("https://www.youtube.com/watch?v=BDbWpN80PT4")#.format(ID[0])
 
 
 
