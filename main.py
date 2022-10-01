@@ -15,21 +15,39 @@ import re
 
 
 
-def connect_db(sorted_data):
+def connect_db(data, col):
     cluster = pymongo.MongoClient(
-        #"mongodb+srv://admin:JyggcLIE4DGsQtu8@cluster0.0lwnskf.mongodb.net/?retryWrites=true&w=majority")
+
         os.getenv("db_key"))
     db = cluster["test"]
-    print(db.list_collection_names())
-    isInList = False#url[32:] in db.list_collection_names()
 
-    print(isInList)
-    if isInList:
-        print("record already here!")
-    else:
-        collection = db["timestamp"]
-        collection.insert_many(sorted_data.to_dict("records"))
-        print("succsessfully inserted  into database")
+
+    if col == "comments":
+        collection = db[col]
+        for i in range(len(data)):
+            if collection.find_one({"Comment": data["Comment"].iloc[i]}):
+                dataset = collection.find_one({"Comment": data["Comment"].iloc[i]})
+                if dataset.get("Likes") < data["Likes"].iloc[i]:
+                    newvalues = { "$set": {"Likes": data["Likes"].iloc[i]}}
+                    collection.update_one(dataset, newvalues)
+                    print("succsessfully  updated {} to {}  into database".format(dataset, newvalues))
+                else:
+                    print("data are up to date!")
+
+            else:
+                #record_to_insert = data.loc[i].to_dict("list")
+                collection.insert_one(data.loc[i].to_dict())
+                print("succsessfully inserted {}  into database".format(data.loc[i]))
+    if col == "timestamps":
+        collection = db[col]
+        try:
+            collection.insert_many(data.to_dict("records"))
+            print("succsessfully inserted timestamps")
+        except:
+            print("no timestamps")
+
+    print("hello")
+
 
 
 def ScrapComment(url):
@@ -58,7 +76,7 @@ def ScrapComment(url):
         prev_h +=200
         print(prev_h)
 
-        if prev_h >= 6000: #6000 for top coments
+        if prev_h >= height: #6000 for top coments
             break
 
 
@@ -107,8 +125,11 @@ def ScrapComment(url):
     end_time = datetime.now()
     print(end_time - start_time)
 
+    np_array = sorted_data[0:11].to_numpy()
+    dataframe_sorted = pd.DataFrame(np_array, columns=['Likes', 'Comment', 'Author', 'URL', 'Title', 'Timestamp'])
 
-    connect_db(timestamp_df)
+    connect_db(timestamp_df, "timestamps")
+    connect_db(dataframe_sorted, "comments")
     # print(sorted_data.to_json())
     # print(sorted_data.to_dict("records"))
     # print(sorted_data.to_dict("index"))
@@ -121,19 +142,13 @@ def ScrapComment(url):
     # print(len(comment_list))
 
 
-
-
-
-if __name__ == "__main__":
+def get_youtube_urls():
     load_dotenv()
     api_key = os.getenv("api_key")
-
-
-    youtube = build('youtube', 'v3', developerKey=api_key)
+    #youtube = build('youtube', 'v3', developerKey=api_key)
     api = Api(api_key=api_key)
-    print(api.get_i18n_regions())
 
-    video_by_chart = api.get_videos_by_chart(chart="mostPopular", region_code="de", count=5, category_id="24")
+    video_by_chart = api.get_videos_by_chart(chart="mostPopular", region_code="de", count=10, category_id="23")
     ID = []
     # category list of IDs
     # 1 - Film & Animation
@@ -169,9 +184,17 @@ if __name__ == "__main__":
     # 43 - Shows
     # 44 - Trailers
     for i in video_by_chart.items:
-        print(i.id)
+        #print(i.id)
         ID.append(i.id)
-    ScrapComment("https://www.youtube.com/watch?v=BDbWpN80PT4")#.format(ID[0])
+    return ID
+
+
+if __name__ == "__main__":
+    #load_dotenv()
+    print(get_youtube_urls())
+    for i in range(len(get_youtube_urls())):
+        ScrapComment("https://www.youtube.com/watch?v={}".format(get_youtube_urls()[i]))
+
 
 
 
