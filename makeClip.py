@@ -9,6 +9,7 @@ import re
 from moviepy.editor import VideoFileClip
 import time
 from scenedetect import open_video, ContentDetector, SceneManager, StatsManager
+import pandas as pd
 
 
 def cut_video(video_title, start_time, duration):
@@ -96,7 +97,7 @@ def add_text_to_video(comment):
 
 def get_startTime_and_endTime(url):
     cluster = pymongo.MongoClient(
-        "mongodb+srv://admin:JyggcLIE4DGsQtu8@cluster0.0lwnskf.mongodb.net/?retryWrites=true&w=majority")
+        os.getenv("db_key"))
     db = cluster["test"]
     collection = db["timestamps"]
     pymongo_cursor = collection.find()
