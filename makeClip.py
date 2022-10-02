@@ -142,20 +142,32 @@ def get_startTime_and_endTime(url):
     begin_of_scenes = find_scenes("video1.mp4")
     start_and_endtime = {"Starttime":[], "Endtime":[]}
 
+    # for i in range(len(timestamps)):
+    #     for y in range(len(begin_of_scenes)):
+    #         if timestamps[i] <= begin_of_scenes[y]+10 and timestamps[i] <= begin_of_scenes[y]+15:
+    #             if timestamps[i]-begin_of_scenes[y] <= 10:
+    #                 start_and_endtime["Starttime"].append(timestamps[i])
+    #                 start_and_endtime["Endtime"].append(begin_of_scenes[y])
+    #             start_and_endtime["Starttime"].append(timestamps[i])
+    #             start_and_endtime["Endtime"].append(begin_of_scenes[y])
+    #             break
+    #         elif y ==len(begin_of_scenes):
+    #             start_and_endtime["Starttime"].append(timestamps[i])
+    #             start_and_endtime["Endtime"].append(timestamps[i]+15)
     for i in range(len(timestamps)):
         for y in range(len(begin_of_scenes)):
-            if timestamps[i] <= begin_of_scenes[y]+10 and timestamps[i] <= begin_of_scenes[y]+15:
-                if timestamps[i]-begin_of_scenes[y] <= 10:
+            if timestamps[i] < begin_of_scenes[y]:
+                if (begin_of_scenes[y] - timestamps[i]) > 5 and (begin_of_scenes[y] - timestamps[i]) < 40:
                     start_and_endtime["Starttime"].append(timestamps[i])
                     start_and_endtime["Endtime"].append(begin_of_scenes[y])
+                    break
+            if y + 1 == len(begin_of_scenes):
                 start_and_endtime["Starttime"].append(timestamps[i])
-                start_and_endtime["Endtime"].append(begin_of_scenes[y])
-                break
-            elif y ==len(begin_of_scenes):
-                start_and_endtime["Starttime"].append(timestamps[i])
-                start_and_endtime["Endtime"].append(timestamps[i]+15)
+                start_and_endtime["Endtime"].append(timestamps[i] + 15)
 
-
+    list = []
+    for i in range(len(timestamps)):
+        list.append(start_and_endtime["Endtime"][i] - start_and_endtime["Starttime"][i])
 
     print("")
 
