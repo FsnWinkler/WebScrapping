@@ -95,12 +95,12 @@ def add_text_to_video(comment):
         final = mp.CompositeVideoClip([my_video, txt_col.set_position((0, my_video.h - my_text.h - 90)),txt_col2.set_position((0, my_video.h - my_text.h - 50))])
         final.subclip(0, 20).write_videofile("test.mp4", fps=30, codec="libx264")
 
-def get_startTime_and_endTime(url):
+def get_startTime_and_endTime():
     cluster = pymongo.MongoClient(
         os.getenv("db_key"))
     db = cluster["test"]
     collection = db["timestamps"]
-    pymongo_cursor = collection.find()
+    pymongo_cursor = collection.find({})
     all_data = list(pymongo_cursor)
 
 
@@ -128,7 +128,7 @@ def get_startTime_and_endTime(url):
 
 
     comment_author_url_timestamp_df = pd.DataFrame({"Comment": comment_arr, "Author": author_arr, "URL": URL_arr, "Timestamp": timestamp_arr})
-    filtered_df = comment_author_url_timestamp_df.loc[comment_author_url_timestamp_df["URL"] == url]
+    #filtered_df = comment_author_url_timestamp_df.loc[comment_author_url_timestamp_df["URL"] == url]
 
     timestamps = []
 
@@ -139,8 +139,8 @@ def get_startTime_and_endTime(url):
 
 
 
-    begin_of_scenes = find_scenes("video1.mp4")
-    start_and_endtime = {"Starttime":[], "Endtime":[]}
+    begin_of_scenes = find_scenes("C:\\Users\\ffff\\PycharmProjects\\WebScrapping\\Videos\\vid1.mp4")
+    start_and_endtime = {"Starttime": [], "Endtime": []}
 
     # for i in range(len(timestamps)):
     #     for y in range(len(begin_of_scenes)):
@@ -165,10 +165,10 @@ def get_startTime_and_endTime(url):
                 start_and_endtime["Starttime"].append(timestamps[i])
                 start_and_endtime["Endtime"].append(timestamps[i] + 15)
 
-    list = []
+    liste = []
     for i in range(len(timestamps)):
         list.append(start_and_endtime["Endtime"][i] - start_and_endtime["Starttime"][i])
-
+    print(liste)
     print("")
 
 
@@ -211,9 +211,4 @@ def main():
 
 if __name__ == "__main__":
     #download_yt_video("https://www.youtube.com/watch?v=BDbWpN80PT4")
-    string = "0:10"
-
-
-
-    cut_video("vid1", "01:10", "20")
-    main()
+    get_startTime_and_endTime()
