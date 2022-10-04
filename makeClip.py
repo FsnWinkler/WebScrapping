@@ -96,12 +96,14 @@ def add_text_to_video(comment):
         final.subclip(0, 20).write_videofile("test.mp4", fps=30, codec="libx264")
 
 def get_startTime_and_endTime():
+    load_dotenv()
     cluster = pymongo.MongoClient(
         os.getenv("db_key"))
     db = cluster["test"]
     collection = db["timestamps"]
-    pymongo_cursor = collection.find({})
-    all_data = list(pymongo_cursor)
+    #pymongo_cursor = collection.find({})
+    all_data = [document for document in collection.find({})]
+    #all_data = list(pymongo_cursor)
 
 
     comment_arr = []
@@ -129,11 +131,12 @@ def get_startTime_and_endTime():
 
     comment_author_url_timestamp_df = pd.DataFrame({"Comment": comment_arr, "Author": author_arr, "URL": URL_arr, "Timestamp": timestamp_arr})
     #filtered_df = comment_author_url_timestamp_df.loc[comment_author_url_timestamp_df["URL"] == url]
+    times_df = comment_author_url_timestamp_df["Timestamp"].where(comment_author_url_timestamp_df["URL"] == "https://www.youtube.com/watch?v=QPJH4d8s1yM").dropna(0)
 
     timestamps = []
 
-    for i in range(len(comment_author_url_timestamp_df)):
-        timestamp = comment_author_url_timestamp_df.loc[i]["Timestamp"]
+    for i in range(len(times_df)):
+        timestamp = times_df.loc[i]
         as_secounds = int(timestamp[0:2]) * 60 + int(timestamp[3:5])
         timestamps.append(as_secounds)
 
@@ -157,7 +160,7 @@ def get_startTime_and_endTime():
     for i in range(len(timestamps)):
         for y in range(len(begin_of_scenes)):
             if timestamps[i] < begin_of_scenes[y]:
-                if (begin_of_scenes[y] - timestamps[i]) > 5 and (begin_of_scenes[y] - timestamps[i]) < 40:
+                if (begin_of_scenes[y] - timestamps[i]) > 10 and (begin_of_scenes[y] - timestamps[i]) < 40:
                     start_and_endtime["Starttime"].append(timestamps[i])
                     start_and_endtime["Endtime"].append(begin_of_scenes[y])
                     break
@@ -167,7 +170,7 @@ def get_startTime_and_endTime():
 
     liste = []
     for i in range(len(timestamps)):
-        list.append(start_and_endtime["Endtime"][i] - start_and_endtime["Starttime"][i])
+        liste.append(start_and_endtime["Endtime"][i] - start_and_endtime["Starttime"][i])
     print(liste)
     print("")
 
