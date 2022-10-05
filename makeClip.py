@@ -174,6 +174,8 @@ def get_startTime_and_endTime(url):
     for i in range(len(timestamps)):
         liste.append(start_and_endtime["Endtime"][i] - start_and_endtime["Starttime"][i])
     print(liste)
+    final_df = pd.DataFrame({"Comment": comment_arr, "Author": author_arr, "URL": URL_arr, "Starttime": start_and_endtime["Starttime"], "Endtime": start_and_endtime["Endtime"]})
+
     print("")
 
 
@@ -217,6 +219,6 @@ def main():
 if __name__ == "__main__":
     #download_yt_video("https://www.youtube.com/watch?v=BDbWpN80PT4")
     get_startTime_and_endTime("https://www.youtube.com/watch?v=BDbWpN80PT4")
-    link = "https://www.youtube.com/watch?v=BDbWpN80PT4"
-    download_yt_video(link)
-    print(" ")
+    # link = "https://www.youtube.com/watch?v=BDbWpN80PT4"
+    # download_yt_video(link)
+    # print(" ")
