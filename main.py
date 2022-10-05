@@ -16,6 +16,7 @@ import re
 
 
 def connect_db(data, col):
+    load_dotenv()
     cluster = pymongo.MongoClient(
 
         os.getenv("db_key"))
@@ -32,7 +33,7 @@ def connect_db(data, col):
                     collection.update_one(dataset, newvalues)
                     print("succsessfully  updated {} to {}  into database".format(dataset, newvalues))
                 else:
-                    print("data are up to date!")
+                    print("Likes are up to date!")
 
             else:
                 #record_to_insert = data.loc[i].to_dict("list")
@@ -41,12 +42,23 @@ def connect_db(data, col):
     if col == "timestamps":
         collection = db[col]
         try:
-            collection.insert_many(data.to_dict("records"))
-            print("succsessfully inserted timestamps")
+            for i in range(len(data)):
+                if collection.find_one({"Comment": data["Comment"].iloc[i]}):
+                    print("Timestamp is uptodate")
+                    continue
+
+                else:
+                    #record_to_insert = data.loc[i].to_dict("list")
+                    collection.insert_one(data.loc[i].to_dict())
+                    print("succsessfully inserted {}  into database".format(data.loc[i]))
+
+        # try:
+        #     collection.insert_many(data.to_dict("records"))
+        #     print("succsessfully inserted timestamps")
         except:
             print("no timestamps")
 
-    print("hello")
+    print("")
 
 
 
@@ -143,7 +155,7 @@ def ScrapComment(url):
 
 
 def get_youtube_urls():
-    load_dotenv()
+
     api_key = os.getenv("api_key")
     #youtube = build('youtube', 'v3', developerKey=api_key)
     api = Api(api_key=api_key)
@@ -191,9 +203,10 @@ def get_youtube_urls():
 
 if __name__ == "__main__":
     #load_dotenv()
-    print(get_youtube_urls())
-    for i in range(len(get_youtube_urls())):
-        ScrapComment("https://www.youtube.com/watch?v={}".format(get_youtube_urls()[i]))
+    # print(get_youtube_urls())
+    # for i in range(len(get_youtube_urls())):
+    #     ScrapComment("https://www.youtube.com/watch?v={}".format(get_youtube_urls()[i]))
+    ScrapComment("https://www.youtube.com/watch?v=BDbWpN80PT4")
 
 
 
