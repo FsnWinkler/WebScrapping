@@ -35,7 +35,7 @@ def download_yt_video(link):
         yt = YouTube(link)
         stream = yt.streams.get_highest_resolution()
         print(stream.filesize_approx)
-        stream.download(os.getcwd()+"/Videos")
+        stream.download(os.getcwd()+"/Videos", filename=link[32:43] + ".mp4")
         print('Task Completed!')
         return(stream.title)
 
@@ -95,14 +95,16 @@ def add_text_to_video(comment):
         final = mp.CompositeVideoClip([my_video, txt_col.set_position((0, my_video.h - my_text.h - 90)),txt_col2.set_position((0, my_video.h - my_text.h - 50))])
         final.subclip(0, 20).write_videofile("test.mp4", fps=30, codec="libx264")
 
-def get_startTime_and_endTime():
+def get_startTime_and_endTime(url):
     load_dotenv()
     cluster = pymongo.MongoClient(
         os.getenv("db_key"))
     db = cluster["test"]
     collection = db["timestamps"]
     #pymongo_cursor = collection.find({})
-    all_data = [document for document in collection.find({})]
+    all_data = [document for document in collection.find({"URL":"{}".format(url)})]
+    if all_data == None:
+        print("no entrys found in db")
     #all_data = list(pymongo_cursor)
 
 
@@ -131,7 +133,7 @@ def get_startTime_and_endTime():
 
     comment_author_url_timestamp_df = pd.DataFrame({"Comment": comment_arr, "Author": author_arr, "URL": URL_arr, "Timestamp": timestamp_arr})
     #filtered_df = comment_author_url_timestamp_df.loc[comment_author_url_timestamp_df["URL"] == url]
-    times_df = comment_author_url_timestamp_df["Timestamp"].where(comment_author_url_timestamp_df["URL"] == "https://www.youtube.com/watch?v=QPJH4d8s1yM").dropna(0)
+    times_df = comment_author_url_timestamp_df["Timestamp"].dropna(0)#.where(comment_author_url_timestamp_df["URL"] == "https://www.youtube.com/watch?v=QPJH4d8s1yM")
 
     timestamps = []
 
@@ -142,7 +144,7 @@ def get_startTime_and_endTime():
 
 
 
-    begin_of_scenes = find_scenes("C:\\Users\\ffff\\PycharmProjects\\WebScrapping\\Videos\\vid1.mp4")
+    begin_of_scenes = find_scenes("C:\\Users\\ffff\\PycharmProjects\\WebScrapping\\Videos\\{}.mp4".format(url[32:43]))
     start_and_endtime = {"Starttime": [], "Endtime": []}
 
     # for i in range(len(timestamps)):
@@ -214,4 +216,7 @@ def main():
 
 if __name__ == "__main__":
     #download_yt_video("https://www.youtube.com/watch?v=BDbWpN80PT4")
-    get_startTime_and_endTime()
+    get_startTime_and_endTime("https://www.youtube.com/watch?v=BDbWpN80PT4")
+    link = "https://www.youtube.com/watch?v=BDbWpN80PT4"
+    download_yt_video(link)
+    print(" ")
