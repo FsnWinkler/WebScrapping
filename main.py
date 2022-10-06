@@ -37,8 +37,8 @@ def connect_db(data, col):
 
             else:
                 #record_to_insert = data.loc[i].to_dict("list")
-                collection.insert_one(data.loc[i].to_dict())
-                print("succsessfully inserted {}  into database".format(data.loc[i]))
+                collection.insert_one(data.iloc[i].to_dict())
+                print("succsessfully inserted {}  into database".format(data.iloc[i]))
     if col == "timestamps":
         collection = db[col]
         try:
@@ -49,8 +49,8 @@ def connect_db(data, col):
 
                 else:
                     #record_to_insert = data.loc[i].to_dict("list")
-                    collection.insert_one(data.loc[i].to_dict())
-                    print("succsessfully inserted {}  into database".format(data.loc[i]))
+                    collection.insert_one(data.iloc[i].to_dict())
+                    print("succsessfully inserted {}  into database".format(data.iloc[i]))
 
         # try:
         #     collection.insert_many(data.to_dict("records"))
@@ -137,7 +137,7 @@ def ScrapComment(url):
     end_time = datetime.now()
     print(end_time - start_time)
 
-    np_array = sorted_data[0:11].to_numpy()
+    np_array = sorted_data[0:10].to_numpy()
     dataframe_sorted = pd.DataFrame(np_array, columns=['Likes', 'Comment', 'Author', 'URL', 'Title', 'Timestamp'])
 
     connect_db(timestamp_df, "timestamps")
@@ -206,7 +206,7 @@ if __name__ == "__main__":
     # print(get_youtube_urls())
     # for i in range(len(get_youtube_urls())):
     #     ScrapComment("https://www.youtube.com/watch?v={}".format(get_youtube_urls()[i]))
-    ScrapComment("https://www.youtube.com/watch?v=BDbWpN80PT4")
+    ScrapComment("https://www.youtube.com/watch?v=y6H8qRLcFCw")
 
 
 
