@@ -1,3 +1,5 @@
+from collections import Counter
+
 from selenium.webdriver.chrome.options import Options
 from selenium import webdriver
 from bs4 import BeautifulSoup
@@ -104,6 +106,20 @@ def ScrapComment(url):
 
     timestamp_array = []
     comment_div_array = [x.text for x in comment_div]
+    counts = dict()
+    for i in range(len(comment_div_array)):
+        words = comment_div_array[i].lower().split()
+
+        for word in words:
+            if word in counts:
+                counts[word] += 1
+            else:
+                counts[word] = 1
+
+    five_most_commom_dict = dict(Counter(counts).most_common(20))
+    print(five_most_commom_dict)
+
+
     for item in comment_div_array:
         timestamp = re.findall("[0-9]+[0-9]+[:]+[0-9]+[0-9]" and "[0-9]+[:]+[0-9]+[0-9]", item)
         if timestamp:
@@ -206,7 +222,7 @@ if __name__ == "__main__":
     # print(get_youtube_urls())
     # for i in range(len(get_youtube_urls())):
     #     ScrapComment("https://www.youtube.com/watch?v={}".format(get_youtube_urls()[i]))
-    ScrapComment("https://www.youtube.com/watch?v=y6H8qRLcFCw")
+    ScrapComment("https://www.youtube.com/watch?v=30BH-BXXpLM")
 
 
 
