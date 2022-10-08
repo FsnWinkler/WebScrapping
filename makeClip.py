@@ -18,24 +18,24 @@ def cut_video(video_title, start_time, duration):
     #     res = "".join((to_add, string))
     # else:
     #     res = start_time
-    secs = int(res[0:2]) *60 + int(res[3:5])
+    #secs = int(res[0:2]) *60 + int(res[3:5])
 
 
     #time_format = time.strftime("%M:%S", time.gmtime(secs))
-    end_time = time.strftime("%M:%S", time.gmtime(secs+int(duration)))
+    #end_time = time.strftime("%M:%S", time.gmtime(secs+int(duration)))
 
 
-    clip = VideoFileClip(os.getcwd()+"\Videos\{}.mp4".format(video_title)).subclip(res, end_time)
+    clip = VideoFileClip(os.getcwd()+"\Videos\{}.mp4".format(video_title)).subclip(start_time, start_time+duration)
     clip.to_videofile(os.getcwd()+"\Clips\clip_{}.mp4".format(video_title), codec="libx264", temp_audiofile='temp-audio.m4a', remove_temp=True, audio_codec='aac')
     clip.close()
 
 
-def download_yt_video(link):
+def download_yt_video(url):
     try:
-        yt = YouTube(link)
+        yt = YouTube(url)
         stream = yt.streams.get_highest_resolution()
         print(stream.filesize_approx)
-        stream.download(os.getcwd()+"/Videos", filename=link[32:43] + ".mp4")
+        stream.download(os.getcwd()+"/Videos", filename=url[32:43] + ".mp4")
         print('Task Completed!')
         return(stream.title)
 
@@ -102,7 +102,7 @@ def get_startTime_and_endTime(url):
     db = cluster["test"]
     collection = db["timestamps"]
     #pymongo_cursor = collection.find({})
-    all_data = [document for document in collection.find({"URL":"{}".format(url)})]
+    all_data = [document for document in collection.where({"URL":"{}".format(url)})]
     if all_data == None:
         print("no entrys found in db")
     #all_data = list(pymongo_cursor)
@@ -144,7 +144,7 @@ def get_startTime_and_endTime(url):
 
 
 
-    begin_of_scenes = find_scenes("C:\\Users\\ffff\\PycharmProjects\\WebScrapping\\Videos\\{}.mp4".format(url[32:43]))
+    begin_of_scenes = find_scenes(os.getcwd()+"\Videos\{}.mp4".format(url[32:43]))
     start_and_endtime = {"Starttime": [], "Endtime": []}
 
     # for i in range(len(timestamps)):
@@ -177,6 +177,7 @@ def get_startTime_and_endTime(url):
     final_df = pd.DataFrame({"Comment": comment_arr, "Author": author_arr, "URL": URL_arr, "Starttime": start_and_endtime["Starttime"], "Endtime": start_and_endtime["Endtime"]})
 
     print("")
+    return final_df
 
 
 def find_scenes(video_path):
@@ -217,8 +218,9 @@ def main():
     pass
 
 if __name__ == "__main__":
-    #download_yt_video("https://www.youtube.com/watch?v=BDbWpN80PT4")
-    get_startTime_and_endTime("https://www.youtube.com/watch?v=BDbWpN80PT4")
+    # download_yt_video("https://www.youtube.com/watch?v=y6H8qRLcFCw")
+    # time.sleep(20)
+    get_startTime_and_endTime("https://www.youtube.com/watch?v=y6H8qRLcFCw")
     # link = "https://www.youtube.com/watch?v=BDbWpN80PT4"
     # download_yt_video(link)
     # print(" ")
