@@ -12,7 +12,7 @@ from googleapiclient.discovery import build
 from dotenv import load_dotenv
 import os
 import re
-
+import json
 
 
 
@@ -41,6 +41,16 @@ def connect_db(data, col):
                 #record_to_insert = data.loc[i].to_dict("list")
                 collection.insert_one(data.iloc[i].to_dict())
                 print("succsessfully inserted {}  into database".format(data.iloc[i]))
+
+    if col == "mostcommon":
+        collection = db[col]
+        if collection.find_one({"URL": data["URL"]}):
+            print("already got most common words")
+        else:
+            collection.insert_one(data)
+            print("succsessfully inserted {}  into database".format(data))
+
+
     if col == "timestamps":
         collection = db[col]
         try:
@@ -61,6 +71,29 @@ def connect_db(data, col):
             print("no timestamps")
 
     print("")
+def find_most_common_words(all_words):
+    f = open("C:\\Users\\ffff\\PycharmProjects\\WebScrapping\\stopwords-de-master\\stopwords-de.json", encoding="utf8")
+    ger_data = json.load(f)
+    f.close()
+
+    f = open("C:\\Users\\ffff\\PycharmProjects\\WebScrapping\\stopwords-en-master\\stopwords-en.json", encoding="utf8")
+    eng_data = json.load(f)
+    f.close()
+
+    counts = dict()
+    for x in all_words:
+        words = x.lower().split()
+        for word in words:
+            if word in eng_data or word in ger_data:
+                continue
+            else:
+                if word in counts:
+                    counts[word] += 1
+                else:
+                    counts[word] = 1
+
+    most_common = dict(Counter(counts).most_common(10))
+    return most_common
 
 
 
@@ -106,18 +139,10 @@ def ScrapComment(url):
 
     timestamp_array = []
     comment_div_array = [x.text for x in comment_div]
-    counts = dict()
-    for i in range(len(comment_div_array)):
-        words = comment_div_array[i].lower().split()
+    most_common = find_most_common_words(comment_div_array)
+    most_common["URL"]  = url
+    connect_db(most_common, "mostcommon")
 
-        for word in words:
-            if word in counts:
-                counts[word] += 1
-            else:
-                counts[word] = 1
-
-    five_most_commom_dict = dict(Counter(counts).most_common(20))
-    print(five_most_commom_dict)
 
 
     for item in comment_div_array:
@@ -222,7 +247,7 @@ if __name__ == "__main__":
     # print(get_youtube_urls())
     # for i in range(len(get_youtube_urls())):
     #     ScrapComment("https://www.youtube.com/watch?v={}".format(get_youtube_urls()[i]))
-    ScrapComment("https://www.youtube.com/watch?v=30BH-BXXpLM")
+    ScrapComment("https://www.youtube.com/watch?v=50S1XdRvCG8")
 
 
 
