@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 import os
 import re
 import json
-
+import makeClip
 
 
 
@@ -241,13 +241,18 @@ def get_youtube_urls():
         ID.append(i.id)
     return ID
 
+def main(url):
+    #ScrapComment(url)
+    #
+    #time.sleep(5)
+    makeClip.main(url)
 
 if __name__ == "__main__":
     #load_dotenv()
     # print(get_youtube_urls())
     # for i in range(len(get_youtube_urls())):
     #     ScrapComment("https://www.youtube.com/watch?v={}".format(get_youtube_urls()[i]))
-    ScrapComment("https://www.youtube.com/watch?v=50S1XdRvCG8")
+    main("https://www.youtube.com/watch?v=phK55YRIxVM")
 
 
 

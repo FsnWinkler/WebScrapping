@@ -1,3 +1,5 @@
+import subprocess
+
 from dotenv import load_dotenv
 import os
 import pymongo
@@ -12,7 +14,21 @@ from scenedetect import open_video, ContentDetector, SceneManager, StatsManager
 import pandas as pd
 
 
-def cut_video(video_title, start_time, duration):
+def cut_video(url):
+    load_dotenv()
+    cluster = pymongo.MongoClient(
+        os.getenv("db_key"))
+    db = cluster["test"]
+    collection = db["final_timestamps"]
+    # pymongo_cursor = collection.find({})
+    all_data = [document for document in collection.find({"URL": "{}".format(url)})]
+    if all_data == None:
+        print("no entrys found in db")
+    duration = get_length(os.getcwd()+"\Videos\{}.mp4".format(all_data[0]["URL"][32:43]))
+
+    print("")
+
+
     # if len(start_time) == 4: # add a 0 if start_time string 0:00 format 00:00 required
     #     to_add = "0"
     #     res = "".join((to_add, string))
@@ -23,12 +39,29 @@ def cut_video(video_title, start_time, duration):
 
     #time_format = time.strftime("%M:%S", time.gmtime(secs))
     #end_time = time.strftime("%M:%S", time.gmtime(secs+int(duration)))
+    try:
+        for i in range(len(all_data)):
+            if all_data[i]["Starttime"] > round(duration)-1:
+                continue
+            else:
+                clip = VideoFileClip(os.getcwd()+"\Videos\{}.mp4".format(all_data[i]["URL"][32:43])).subclip(all_data[i]["Starttime"], all_data[i]["Endtime"])
+                clip.to_videofile(os.getcwd()+"\Clips\clip_{}_{}.mp4".format(all_data[i]["URL"][32:43], i), codec="libx264", temp_audiofile='temp-audio.m4a', remove_temp=True, audio_codec='aac')
+                clip.close()
+                time.sleep(2)
+                clip_duration = all_data[i]["Endtime"] - all_data[i]["Starttime"]
+                add_text_to_video(all_data[i]["Comment"], all_data[i]["URL"][32:43], i, clip_duration)
+                print("")
+    except:
+        print("error")
+        #time.sleep(10)
 
-
-    clip = VideoFileClip(os.getcwd()+"\Videos\{}.mp4".format(video_title)).subclip(start_time, start_time+duration)
-    clip.to_videofile(os.getcwd()+"\Clips\clip_{}.mp4".format(video_title), codec="libx264", temp_audiofile='temp-audio.m4a', remove_temp=True, audio_codec='aac')
-    clip.close()
-
+def get_length(filename):
+    result = subprocess.run(["ffprobe", "-v", "error", "-show_entries",
+                             "format=duration", "-of",
+                             "default=noprint_wrappers=1:nokey=1", filename],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT)
+    return float(result.stdout)
 
 def download_yt_video(url):
     try:
@@ -43,47 +76,30 @@ def download_yt_video(url):
         print("error")
 
 
-def search_db_for_videos():
-    load_dotenv()
-    cluster = pymongo.MongoClient(os.getenv("db_key"))
-    db = cluster["test"]
-    collection = db["timestamp"]
-    for x in collection.find({}, {"Timestamp":1, "_id":0}):
-      print(x["Timestamp"])
-
-    link =""
-
-    for x in collection.find({}, {"URL":1, "_id":0}):
-        link = x["URL"]
-
-    comment = ""
-    for x in collection.find({}, {"Comment":1, "_id":0}):
-        comment = x["Comment"]
-
-
-
-def add_text_to_video(comment):
+def add_text_to_video(comment, url, counter, clip_duration):
+    print("video")
     comment = re.sub('\d+\d+:+\d+\d', '', comment)
     comment = re.sub('\d+:+\d+\d', '', comment)
     if len(comment) < 101:
-        my_video = mp.VideoFileClip("clip.mp4", audio=True)
+        my_video = mp.VideoFileClip(os.getcwd()+"\Clips\clip_{}_{}.mp4".format(url, counter), audio=True)
         w,h = moviesize = my_video.size
-        my_text = mp.TextClip("Author: "+ comment, font="Amiri-regular", color="white", fontsize=24)
+        my_text = mp.TextClip(comment, font="Amiri-regular", color="white", fontsize=24)
         txt_col = my_text.on_color(size=(my_video.w, my_text.h+11), color=(0,0,0), pos=(10, "center"), col_opacity=0.6)
+
 
 
         #txt_mov = txt_col.set_pos( lambda t: (max(w/30,int(w-0.5*w*t)),max(5*h/6,int(100*t))) )
         final = mp.CompositeVideoClip([my_video,txt_col.set_position((0,my_video.h-my_text.h-50))])
-        final.subclip(0,20).write_videofile("test.mp4",fps=60,codec="libx264")
+        final.subclip(0, clip_duration).write_videofile(os.getcwd()+"\Clips_Final\clip_{}_{}.mp4".format(url, counter),fps=60,codec="libx264")
 
     elif len(comment) <202:
         comment1 = comment[0:101]
         comment2 = comment[101:201]
         comment2 = comment2.lstrip()
 
-        my_video = mp.VideoFileClip("clip.mp4", audio=True)
+        my_video = mp.VideoFileClip(os.getcwd()+"\Clips\clip_{}_{}.mp4".format(url, counter), audio=True)
         w, h = moviesize = my_video.size
-        my_text = mp.TextClip("Author: " + comment1, font="Amiri-regular", color="white", fontsize=24)
+        my_text = mp.TextClip(comment1, font="Amiri-regular", color="white", fontsize=24)
         txt_col = my_text.on_color(size=(my_video.w, my_text.h + 11), color=(0, 0, 0), pos=(10, "center"),
                                    col_opacity=0.6)
         print(my_text.h)
@@ -93,7 +109,7 @@ def add_text_to_video(comment):
 
         # txt_mov = txt_col.set_pos( lambda t: (max(w/30,int(w-0.5*w*t)),max(5*h/6,int(100*t))) )
         final = mp.CompositeVideoClip([my_video, txt_col.set_position((0, my_video.h - my_text.h - 90)),txt_col2.set_position((0, my_video.h - my_text.h - 50))])
-        final.subclip(0, 20).write_videofile("test.mp4", fps=30, codec="libx264")
+        final.subclip(0, clip_duration).write_videofile(os.getcwd()+"\Clips_Final\clip_{}_{}.mp4".format(url, counter), fps=30, codec="libx264")
 
 def get_startTime_and_endTime(url):
     load_dotenv()
@@ -102,7 +118,7 @@ def get_startTime_and_endTime(url):
     db = cluster["test"]
     collection = db["timestamps"]
     #pymongo_cursor = collection.find({})
-    all_data = [document for document in collection.where({"URL":"{}".format(url)})]
+    all_data = [document for document in collection.find({"URL" : "{}".format(url)})]
     if all_data == None:
         print("no entrys found in db")
     #all_data = list(pymongo_cursor)
@@ -177,7 +193,29 @@ def get_startTime_and_endTime(url):
     final_df = pd.DataFrame({"Comment": comment_arr, "Author": author_arr, "URL": URL_arr, "Starttime": start_and_endtime["Starttime"], "Endtime": start_and_endtime["Endtime"]})
 
     print("")
-    return final_df
+
+
+    load_dotenv()
+    cluster = pymongo.MongoClient(os.getenv("db_key"))
+    db = cluster["test"]
+
+
+    collection = db["final_timestamps"]
+    for i in range(len(final_df)):
+        if collection.find_one({"Comment": final_df["Comment"].iloc[i]}):
+            dataset = collection.find_one({"Comment": final_df["Comment"].iloc[i]})
+            if dataset.get("Likes") < final_df["Likes"].iloc[i]:
+                newvalues = {"$set": {"Likes": final_df["Likes"].iloc[i]}}
+                collection.update_one(dataset, newvalues)
+                print("succsessfully  updated {} to {}  into database".format(dataset, newvalues))
+            else:
+                print("Likes are up to date!")
+
+        else:
+            # record_to_insert = data.loc[i].to_dict("list")
+            collection.insert_one(final_df.iloc[i].to_dict())
+            print("succsessfully inserted {}  into database".format(final_df.iloc[i]))
+
 
 
 def find_scenes(video_path):
@@ -214,13 +252,20 @@ def find_scenes(video_path):
 
     return begin_of_scenes
 
-def main():
-    pass
+def main(url):
+    download_yt_video(url)
+    time.sleep(20)
+    get_startTime_and_endTime(url)
+    time.sleep(5)
+    cut_video(url)
+
 
 if __name__ == "__main__":
     # download_yt_video("https://www.youtube.com/watch?v=y6H8qRLcFCw")
     # time.sleep(20)
-    get_startTime_and_endTime("https://www.youtube.com/watch?v=y6H8qRLcFCw")
+    #cut_video("https://www.youtube.com/watch?v=y6H8qRLcFCw")
+    #get_startTime_and_endTime("https://www.youtube.com/watch?v=y6H8qRLcFCw")
     # link = "https://www.youtube.com/watch?v=BDbWpN80PT4"
     # download_yt_video(link)
     # print(" ")
+    main("https://www.youtube.com/watch?v=BDbWpN80PT4")
