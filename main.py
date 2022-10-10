@@ -14,7 +14,7 @@ import os
 import re
 import json
 import makeClip
-
+import threading
 
 
 def connect_db(data, col):
@@ -242,9 +242,9 @@ def get_youtube_urls():
     return ID
 
 def main(url):
-    #ScrapComment(url)
-    #
-    #time.sleep(5)
+
+    ScrapComment(url)
+    time.sleep(5)
     makeClip.main(url)
 
 if __name__ == "__main__":
@@ -252,7 +252,7 @@ if __name__ == "__main__":
     # print(get_youtube_urls())
     # for i in range(len(get_youtube_urls())):
     #     ScrapComment("https://www.youtube.com/watch?v={}".format(get_youtube_urls()[i]))
-    main("https://www.youtube.com/watch?v=phK55YRIxVM")
+    main("https://www.youtube.com/watch?v=51enAY7bkOw")
 
 
 

@@ -12,7 +12,7 @@ from moviepy.editor import VideoFileClip
 import time
 from scenedetect import open_video, ContentDetector, SceneManager, StatsManager
 import pandas as pd
-
+import os.path
 
 def cut_video(url):
     load_dotenv()
@@ -65,12 +65,15 @@ def get_length(filename):
 
 def download_yt_video(url):
     try:
-        yt = YouTube(url)
-        stream = yt.streams.get_highest_resolution()
-        print(stream.filesize_approx)
-        stream.download(os.getcwd()+"/Videos", filename=url[32:43] + ".mp4")
-        print('Task Completed!')
-        return(stream.title)
+        if os.path.exists(os.getcwd()+"/Videos" + url[32:43] + ".mp4"):
+            pass
+        else:
+            yt = YouTube(url)
+            stream = yt.streams.get_highest_resolution()
+            print(stream.filesize_approx)
+            stream.download(os.getcwd()+"/Videos", filename=url[32:43] + ".mp4")
+            print('Task Completed!')
+            return(stream.title)
 
     except:
         print("error")
@@ -178,7 +181,7 @@ def get_startTime_and_endTime(url):
     for i in range(len(timestamps)):
         for y in range(len(begin_of_scenes)):
             if timestamps[i] < begin_of_scenes[y]:
-                if (begin_of_scenes[y] - timestamps[i]) > 10 and (begin_of_scenes[y] - timestamps[i]) < 40:
+                if (begin_of_scenes[y] - timestamps[i]) > 8 and (begin_of_scenes[y] - timestamps[i]) < 30:
                     start_and_endtime["Starttime"].append(timestamps[i])
                     start_and_endtime["Endtime"].append(begin_of_scenes[y])
                     break
@@ -203,13 +206,14 @@ def get_startTime_and_endTime(url):
     collection = db["final_timestamps"]
     for i in range(len(final_df)):
         if collection.find_one({"Comment": final_df["Comment"].iloc[i]}):
-            dataset = collection.find_one({"Comment": final_df["Comment"].iloc[i]})
-            if dataset.get("Likes") < final_df["Likes"].iloc[i]:
-                newvalues = {"$set": {"Likes": final_df["Likes"].iloc[i]}}
-                collection.update_one(dataset, newvalues)
-                print("succsessfully  updated {} to {}  into database".format(dataset, newvalues))
-            else:
-                print("Likes are up to date!")
+            continue
+            #dataset = collection.find_one({"Comment": final_df["Comment"].iloc[i]})
+            # if dataset.get("Likes") < final_df["Likes"].iloc[i]:
+            #     newvalues = {"$set": {"Likes": final_df["Likes"].iloc[i]}}
+            #     collection.update_one(dataset, newvalues)
+            #     print("succsessfully  updated {} to {}  into database".format(dataset, newvalues))
+            # else:
+            #     print("Likes are up to date!")
 
         else:
             # record_to_insert = data.loc[i].to_dict("list")
