@@ -196,7 +196,7 @@ def ScrapComment(url):
 
 
 def get_youtube_urls():
-
+    load_dotenv()
     api_key = os.getenv("api_key")
     #youtube = build('youtube', 'v3', developerKey=api_key)
     api = Api(api_key=api_key)
@@ -245,14 +245,17 @@ def main(url):
 
     ScrapComment(url)
     time.sleep(5)
-    makeClip.main(url)
+    try:
+        makeClip.main(url)
+    except:
+        print("makeclip error")
 
 if __name__ == "__main__":
     #load_dotenv()
     # print(get_youtube_urls())
-    # for i in range(len(get_youtube_urls())):
-    #     ScrapComment("https://www.youtube.com/watch?v={}".format(get_youtube_urls()[i]))
-    main("https://www.youtube.com/watch?v=51enAY7bkOw")
+    for i in range(len(get_youtube_urls())):
+        main("https://www.youtube.com/watch?v={}".format(get_youtube_urls()[i]))
+    #main("https://www.youtube.com/watch?v=51enAY7bkOw")
 
 
 
