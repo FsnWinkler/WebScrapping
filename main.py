@@ -201,7 +201,7 @@ def get_youtube_urls():
     #youtube = build('youtube', 'v3', developerKey=api_key)
     api = Api(api_key=api_key)
 
-    video_by_chart = api.get_videos_by_chart(chart="mostPopular", region_code="de", count=10, category_id="23")
+    video_by_chart = api.get_videos_by_chart(chart="mostPopular", region_code="de", count=10, category_id="22")
     ID = []
     # category list of IDs
     # 1 - Film & Animation
@@ -253,9 +253,9 @@ def main(url):
 if __name__ == "__main__":
     #load_dotenv()
     # print(get_youtube_urls())
-    for i in range(len(get_youtube_urls())):
-        main("https://www.youtube.com/watch?v={}".format(get_youtube_urls()[i]))
-    #main("https://www.youtube.com/watch?v=51enAY7bkOw")
+    # for i in range(len(get_youtube_urls())):
+    #     main("https://www.youtube.com/watch?v={}".format(get_youtube_urls()[i]))
+    main("https://www.youtube.com/watch?v=VGWGcESPltM")
 
 
 
