@@ -124,7 +124,7 @@ def get_startTime_and_endTime(url):
     all_data = [document for document in collection.find({"URL" : "{}".format(url)})]
     if all_data == None:
         print("no entrys found in db")
-    #all_data = list(pymongo_cursor)
+
 
 
     comment_arr = []
