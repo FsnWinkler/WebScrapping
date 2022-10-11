@@ -155,11 +155,13 @@ def get_startTime_and_endTime(url):
     times_df = comment_author_url_timestamp_df["Timestamp"].dropna(0)#.where(comment_author_url_timestamp_df["URL"] == "https://www.youtube.com/watch?v=QPJH4d8s1yM")
 
     timestamps = []
-
-    for i in range(len(times_df)):
-        timestamp = times_df.loc[i]
-        as_secounds = int(timestamp[0:2]) * 60 + int(timestamp[3:5])
-        timestamps.append(as_secounds)
+    try:
+        for i in range(len(times_df)):
+            timestamp = times_df.loc[i]
+            as_secounds = int(timestamp[0:2]) * 60 + int(timestamp[3:5])
+            timestamps.append(as_secounds)
+    except:
+        print("error")
 
 
 
@@ -178,20 +180,26 @@ def get_startTime_and_endTime(url):
     #         elif y ==len(begin_of_scenes):
     #             start_and_endtime["Starttime"].append(timestamps[i])
     #             start_and_endtime["Endtime"].append(timestamps[i]+15)
-    for i in range(len(timestamps)):
-        for y in range(len(begin_of_scenes)):
-            if timestamps[i] < begin_of_scenes[y]:
-                if (begin_of_scenes[y] - timestamps[i]) > 8 and (begin_of_scenes[y] - timestamps[i]) < 30:
+    try:
+        for i in range(len(timestamps)):
+            for y in range(len(begin_of_scenes)):
+                if timestamps[i] < begin_of_scenes[y]:
+                    if (begin_of_scenes[y] - timestamps[i]) > 8 and (begin_of_scenes[y] - timestamps[i]) < 30:
+                        start_and_endtime["Starttime"].append(timestamps[i])
+                        start_and_endtime["Endtime"].append(begin_of_scenes[y])
+                        break
+                if y + 1 == len(begin_of_scenes):
                     start_and_endtime["Starttime"].append(timestamps[i])
-                    start_and_endtime["Endtime"].append(begin_of_scenes[y])
-                    break
-            if y + 1 == len(begin_of_scenes):
-                start_and_endtime["Starttime"].append(timestamps[i])
-                start_and_endtime["Endtime"].append(timestamps[i] + 15)
+                    start_and_endtime["Endtime"].append(timestamps[i] + 15)
+    except:
+        print("error")
 
     liste = []
-    for i in range(len(timestamps)):
-        liste.append(start_and_endtime["Endtime"][i] - start_and_endtime["Starttime"][i])
+    try:
+        for i in range(len(timestamps)):
+            liste.append(start_and_endtime["Endtime"][i] - start_and_endtime["Starttime"][i])
+    except:
+        print("timestamp error")
     print(liste)
     final_df = pd.DataFrame({"Comment": comment_arr, "Author": author_arr, "URL": URL_arr, "Starttime": start_and_endtime["Starttime"], "Endtime": start_and_endtime["Endtime"]})
 
