@@ -16,6 +16,47 @@ import json
 import makeClip
 import threading
 
+def Scrap_Trends_for_URLS():
+    options = Options()
+    options.add_argument('--no-sandbox')
+    options.add_argument("--headless")
+    options.add_argument('--disable-dev-shm-usage')
+    driver = webdriver.Chrome('./chromedriver',options=options )#options=options
+    driver.get("https://www.youtube.com/feed/explore")
+    time.sleep(2)
+    button  = driver.find_element(By.XPATH,"/html/body/c-wiz/div/div/div/div[2]/div[1]/div[3]/div[1]/form[2]/div/div/button")
+    time.sleep(2)
+    button.click()
+    prev_h = 0
+    while True:
+        height = driver.execute_script("""
+                function getActualHeight() {
+                    return Math.max(
+                        Math.max(document.body.scrollHeight, document.documentElement.scrollHeight),
+                        Math.max(document.body.offsetHeight, document.documentElement.offsetHeight),
+                        Math.max(document.body.clientHeight, document.documentElement.clientHeight)
+                    );
+                }
+                return getActualHeight();
+            """)
+        driver.execute_script(f"window.scrollTo({prev_h},{prev_h + 200})")
+        # fix the time sleep value according to your network connection
+        time.sleep(1)
+        prev_h +=200
+        print(prev_h)
+
+        if prev_h >= height: #6000 for top coments
+            break
+
+    soup = BeautifulSoup(driver.page_source, 'html.parser')
+    all_hrefs = []
+
+    for a in soup.find_all('a', href=True):
+        print("Found the URL:", a['href'])
+        all_hrefs.append(a["href"])
+    urls = list(set([i for i in all_hrefs if i.__contains__("watch")]))
+    driver.quit()
+    return urls
 
 def connect_db(data, col):
     load_dotenv()
