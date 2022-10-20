@@ -1,5 +1,5 @@
 from collections import Counter
-
+from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium import webdriver
 from bs4 import BeautifulSoup
@@ -296,7 +296,9 @@ if __name__ == "__main__":
     # print(get_youtube_urls())
     # for i in range(len(get_youtube_urls())):
     #     main("https://www.youtube.com/watch?v={}".format(get_youtube_urls()[i]))
-    main("https://www.youtube.com/watch?v=VGWGcESPltM")
+    urls = Scrap_Trends_for_URLS()
+    for i in range(len(urls)):
+        main("https://www.youtube.com{}".format(urls[i]))
 
 
 
