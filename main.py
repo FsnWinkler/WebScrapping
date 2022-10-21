@@ -295,21 +295,28 @@ def get_youtube_urls():
 
 def main(url):
 
-    ScrapComment(url)
-    time.sleep(5)
+    # ScrapComment(url)
+    # time.sleep(5)
     try:
-        makeClip.main(url)
+        #makeClip.main(url)
+        if os.path.exists("urls.json"):
+            with open("urls.json", "a") as file:
+                file.write("," + url)
+        else:
+            with open("urls.json", "w") as file:
+                file.write(url)
     except:
         print("makeclip error")
-
+    print("")
 if __name__ == "__main__":
     #load_dotenv()
     # print(get_youtube_urls())
     # for i in range(len(get_youtube_urls())):
     #     main("https://www.youtube.com/watch?v={}".format(get_youtube_urls()[i]))
-    urls = Scrap_Trends_for_URLS()
-    for i in range(len(urls)):
-        main("https://www.youtube.com{}".format(urls[i]))
+    #urls = Scrap_Trends_for_URLS()
+    # for i in range(len(urls)):
+    #     main("https://www.youtube.com{}".format(urls[i]))
+    main()
 
 
 
