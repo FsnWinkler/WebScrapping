@@ -58,12 +58,23 @@ def Scrap_Trends_for_URLS():
     driver.quit()
     return urls
 
-def connect_db(data, col):
-    load_dotenv()
-    cluster = pymongo.MongoClient(
 
-        os.getenv("db_key"))
-    db = cluster["test"]
+def connenct_db():
+    i = 0
+    while i < 50:
+        try:
+            load_dotenv()
+            cluster = pymongo.MongoClient(
+
+                os.getenv("db_key"))
+            db = cluster["test"]
+            return db
+        except:
+            time.sleep(20)
+            i += 1
+
+def insert_db(data, col):
+    db = connenct_db()
 
 
     if col == "comments":
@@ -182,7 +193,7 @@ def ScrapComment(url):
     comment_div_array = [x.text for x in comment_div]
     most_common = find_most_common_words(comment_div_array)
     most_common["URL"]  = url
-    connect_db(most_common, "mostcommon")
+    insert_db(most_common, "mostcommon")
 
 
 
@@ -222,8 +233,8 @@ def ScrapComment(url):
     np_array = sorted_data[0:10].to_numpy()
     dataframe_sorted = pd.DataFrame(np_array, columns=['Likes', 'Comment', 'Author', 'URL', 'Title', 'Timestamp'])
 
-    connect_db(timestamp_df, "timestamps")
-    connect_db(dataframe_sorted, "comments")
+    insert_db(timestamp_df, "timestamps")
+    insert_db(dataframe_sorted, "comments")
     # print(sorted_data.to_json())
     # print(sorted_data.to_dict("records"))
     # print(sorted_data.to_dict("index"))
