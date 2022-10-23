@@ -293,18 +293,29 @@ def get_youtube_urls():
         ID.append(i.id)
     return ID
 
-def main(url):
+def check_url(url):
+    if os.path.exists("urls.json"):
+        with open("urls.json", "r") as file:
+            if url in file.read():
+                print("url exists")
+                return False
+            else:
+                with open("urls.json", "a") as file:
+                    file.write("," + url)
+                    return True
+    else:
+        with open("urls.json", "w") as file:
+            file.write(url)
 
-    # ScrapComment(url)
-    # time.sleep(5)
+def main(url):
     try:
-        #makeClip.main(url)
-        if os.path.exists("urls.json"):
-            with open("urls.json", "a") as file:
-                file.write("," + url)
+        if check_url(url):
+            ScrapComment(url)
+            time.sleep(5)
+            makeClip.main(url)
         else:
-            with open("urls.json", "w") as file:
-                file.write(url)
+            pass
+
     except:
         print("makeclip error")
     print("")
@@ -316,7 +327,7 @@ if __name__ == "__main__":
     #urls = Scrap_Trends_for_URLS()
     # for i in range(len(urls)):
     #     main("https://www.youtube.com{}".format(urls[i]))
-    main()
+    main("hlhlh")
 
 
 
