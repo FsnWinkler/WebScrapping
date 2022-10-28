@@ -16,6 +16,8 @@ import json
 import makeClip
 import threading
 
+
+
 def Scrap_Trends_for_URLS():
     options = Options()
     options.add_argument('--no-sandbox')
