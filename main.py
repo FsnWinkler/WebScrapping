@@ -156,9 +156,26 @@ def ScrapComment(url):
     options.add_argument('--no-sandbox')
     options.add_argument("--headless")
     options.add_argument('--disable-dev-shm-usage')
+    options.add_argument("--start-maximized")
     driver = webdriver.Chrome('./chromedriver', options=options)
+
+    driver.get("https://www.youtube.com/watch?v=NLXGrLpJ2dQ")
+    cookies_path = 'cookie'
+
+    with open(cookies_path, 'r') as file_path:
+        cookies_list = json.loads(file_path.read())
+
+    # Once on that domain, start adding cookies into the browser
+    for cookie in cookies_list:
+        # If domain is left in, then in the browser domain gets transformed to f'.{domain}'
+        cookie.pop('domain', None)
+        driver.add_cookie(cookie)
+        print("cookies loaded")
+    time.sleep(5)
+    driver.maximize_window()
     driver.get(url)
     start_time = datetime.now()
+    driver.set_window_size(1280, 800)
     prev_h = 0
     while True:
         height = driver.execute_script("""
@@ -182,7 +199,7 @@ def ScrapComment(url):
 
 
     soup = BeautifulSoup(driver.page_source, 'html.parser')
-    driver.quit()
+
     title_text_div = soup.select_one('#container h1')
     title = title_text_div and title_text_div.text
 
@@ -196,8 +213,30 @@ def ScrapComment(url):
     most_common = find_most_common_words(comment_div_array)
     most_common["URL"]  = url
     insert_db(most_common, "mostcommon")
+    counter_array = []
+    time_array = []
+    i = 0
+    for item in comment_div_array:
 
+        timestamp = re.findall("[0-9]+[0-9]+[:]+[0-9]+[0-9]" and "[0-9]+[:]+[0-9]+[0-9]", item)
+        if timestamp:
+            if len(time_array) == 0:
+                first_comment = driver.find_element(By.XPATH,
+                                                    "//*[@id='contents']/ytd-comment-thread-renderer[1]")
+                first_comment.screenshot(os.getcwd()+"\\screenshots_of_comments\\first.png")
+            time_array.append(comment_div_array[i])
+            comment = driver.find_element(By.XPATH, "//*[@id='contents']/ytd-comment-thread-renderer[{}]".format(i + 1))
 
+            time.sleep(2)
+            comment.screenshot(os.getcwd()+"\\screenshots_of_comments\\screen_{}_{}.png".format(url[32:43], i + 1))
+            counter_array.append(i+1)
+            print("screenshot saved")
+            i += 1
+        else:
+            counter_array.append(None)
+            i += 1
+
+    driver.quit()
 
     for item in comment_div_array:
         timestamp = re.findall("[0-9]+[0-9]+[:]+[0-9]+[0-9]" and "[0-9]+[:]+[0-9]+[0-9]", item)
@@ -221,7 +260,7 @@ def ScrapComment(url):
         final_item = new_item.replace(" ", "")
         author_div_stripped.append(str(final_item))
 
-    data = pd.DataFrame({"Likes": like_div_stripped, "Comment": comment_div_array, "Author": author_div_stripped, "URL": url, "Title": title, "Timestamp": timestamp_array})
+    data = pd.DataFrame({"Likes": like_div_stripped, "Comment": comment_div_array, "Author": author_div_stripped, "URL": url, "Title": title, "Timestamp": timestamp_array, "Counter": counter_array})
     #print(data)
 
     sorted_data = data.sort_values(by="Likes", ascending=False)
@@ -233,7 +272,7 @@ def ScrapComment(url):
     print(end_time - start_time)
 
     np_array = sorted_data[0:10].to_numpy()
-    dataframe_sorted = pd.DataFrame(np_array, columns=['Likes', 'Comment', 'Author', 'URL', 'Title', 'Timestamp'])
+    dataframe_sorted = pd.DataFrame(np_array, columns=['Likes', 'Comment', 'Author', 'URL', 'Title', 'Timestamp', 'Counter'])
 
     insert_db(timestamp_df, "timestamps")
     insert_db(dataframe_sorted, "comments")
@@ -302,24 +341,27 @@ def check_url(url):
                 print("url exists")
                 return False
             else:
-                with open("urls.json", "a") as file:
-                    file.write("," + url)
-                    return True
+                return True
     else:
         with open("urls.json", "w") as file:
             file.write(url)
 
-def main(url):
-    try:
-        if check_url(url):
-            ScrapComment(url)
-            time.sleep(5)
-            makeClip.main(url)
-        else:
-            pass
+def write_url(url):
+    with open("urls.json", "a") as file:
+        file.write("," + url)
 
-    except:
-        print("makeclip error")
+def main(url):
+    #try:
+    if check_url(url):
+        ScrapComment(url)
+        time.sleep(5)
+        makeClip.main(url)
+        write_url(url)
+    else:
+        pass
+
+    # except:
+    #     print("makeclip error")
     print("")
 if __name__ == "__main__":
     #load_dotenv()
@@ -329,7 +371,7 @@ if __name__ == "__main__":
     #urls = Scrap_Trends_for_URLS()
     # for i in range(len(urls)):
     #     main("https://www.youtube.com{}".format(urls[i]))
-    main("hlhlh")
+    main("https://www.youtube.com/watch?v=ZcroXCL2Qcs")
 
 
 

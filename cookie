@@ -1,0 +1,67 @@
+[
+  {
+    "domain": ".youtube.com",
+    "expiry": 1667028934,
+    "httpOnly": false,
+    "name": "CONSISTENCY",
+    "path": "/",
+    "secure": true,
+    "value": "APAR8nvHp7fJprS40zji6HcarB1qYOQrib7BGVddm0GSvcLyHl_wrCJHvMrzFfhNWjOiZoOvZWt-Uqc780E5ICh1MJW9EVD2ESEb6vJ9n2tsWzhyk3JayLtW_KjtTRzSKJKPQYeOzzUzLZ34vzRb7dY"
+  },
+  {
+    "domain": ".youtube.com",
+    "expiry": 1682580332,
+    "httpOnly": true,
+    "name": "VISITOR_INFO1_LIVE",
+    "path": "/",
+    "sameSite": "None",
+    "secure": true,
+    "value": "dSfEOkI9CKE"
+  },
+  {
+    "domain": ".youtube.com",
+    "expiry": 1667030132,
+    "httpOnly": true,
+    "name": "GPS",
+    "path": "/",
+    "secure": true,
+    "value": "1"
+  },
+  {
+    "domain": ".youtube.com",
+    "expiry": 1701588334,
+    "httpOnly": false,
+    "name": "PREF",
+    "path": "/",
+    "secure": true,
+    "value": "tz=Europe.Vienna&f6=40000000&f7=100"
+  },
+  {
+    "domain": ".youtube.com",
+    "expiry": 1701156332,
+    "httpOnly": false,
+    "name": "SOCS",
+    "path": "/",
+    "sameSite": "Lax",
+    "secure": true,
+    "value": "CAISEwgDEgk0ODQxNzkyNzIaAmRlIAEaBgiA2vGaBg"
+  },
+  {
+    "domain": ".youtube.com",
+    "expiry": 1701588327,
+    "httpOnly": false,
+    "name": "CONSENT",
+    "path": "/",
+    "secure": true,
+    "value": "PENDING+826"
+  },
+  {
+    "domain": ".youtube.com",
+    "httpOnly": true,
+    "name": "YSC",
+    "path": "/",
+    "sameSite": "None",
+    "secure": true,
+    "value": "v3vxRhpaGAY"
+  }
+]

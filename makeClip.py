@@ -14,7 +14,7 @@ from scenedetect import open_video, ContentDetector, SceneManager, StatsManager
 import pandas as pd
 import os.path
 
-def cut_video(url):
+def  cut_video(url):
     load_dotenv()
     cluster = pymongo.MongoClient(
         os.getenv("db_key"))
@@ -49,7 +49,8 @@ def cut_video(url):
                 clip.close()
                 time.sleep(2)
                 clip_duration = all_data[i]["Endtime"] - all_data[i]["Starttime"]
-                add_text_to_video(all_data[i]["Comment"], all_data[i]["URL"][32:43], i, clip_duration)
+                #add_text_to_video(all_data[i]["Comment"], all_data[i]["URL"][32:43], i, clip_duration)
+                add_screen_to_clip(all_data[i]["URL"], all_data[i]["Counter"])
                 print("")
     except:
         print("error")
@@ -78,41 +79,54 @@ def download_yt_video(url):
     except:
         print("error")
 
+def add_screen_to_clip(url, counter):
+    video = mp.VideoFileClip(os.getcwd()+"\Clips\clip_{}_{}.mp4".format(url, counter))
 
-def add_text_to_video(comment, url, counter, clip_duration):
-    print("video")
-    comment = re.sub('\d+\d+:+\d+\d', '', comment)
-    comment = re.sub('\d+:+\d+\d', '', comment)
-    if len(comment) < 101:
-        my_video = mp.VideoFileClip(os.getcwd()+"\Clips\clip_{}_{}.mp4".format(url, counter), audio=True)
-        w,h = moviesize = my_video.size
-        my_text = mp.TextClip(comment, font="Amiri-regular", color="white", fontsize=24)
-        txt_col = my_text.on_color(size=(my_video.w, my_text.h+11), color=(0,0,0), pos=(10, "center"), col_opacity=0.6)
+    logo = (mp.ImageClip(os.getcwd()+"\screenshots_of_comments\screen_{}_{}.png".format(url[32:43], counter + 1))
+              .set_opacity(0.8)
+              .set_duration(video.duration)
+              #.resize(width=video.w-100) # if you need to resize...
+              .margin(left=10, bottom=10, opacity=0) # (optional) logo-border padding
+              .set_pos(("center", "bottom")))
+
+    final = mp.CompositeVideoClip([video, logo])
+    final.write_videofile(os.getcwd()+"\Clips_Final\clip_{}_{}.mp4".format(url, counter),fps=60,codec="libx264")
 
 
-
-        #txt_mov = txt_col.set_pos( lambda t: (max(w/30,int(w-0.5*w*t)),max(5*h/6,int(100*t))) )
-        final = mp.CompositeVideoClip([my_video,txt_col.set_position((0,my_video.h-my_text.h-50))])
-        final.subclip(0, clip_duration).write_videofile(os.getcwd()+"\Clips_Final\clip_{}_{}.mp4".format(url, counter),fps=60,codec="libx264")
-
-    elif len(comment) <202:
-        comment1 = comment[0:101]
-        comment2 = comment[101:201]
-        comment2 = comment2.lstrip()
-
-        my_video = mp.VideoFileClip(os.getcwd()+"\Clips\clip_{}_{}.mp4".format(url, counter), audio=True)
-        w, h = moviesize = my_video.size
-        my_text = mp.TextClip(comment1, font="Amiri-regular", color="white", fontsize=24)
-        txt_col = my_text.on_color(size=(my_video.w, my_text.h + 11), color=(0, 0, 0), pos=(10, "center"),
-                                   col_opacity=0.6)
-        print(my_text.h)
-        my_text2 = mp.TextClip(comment2, font="Amiri-regular", color="white", fontsize=24)
-        txt_col2 = my_text2.on_color(size=(my_video.w, my_text.h+ 11), color=(0,0,0), pos=(10, "center"), col_opacity=0.6)
-        # ,txt_col2.set_position((0,my_video.h-my_text.h-150))
-
-        # txt_mov = txt_col.set_pos( lambda t: (max(w/30,int(w-0.5*w*t)),max(5*h/6,int(100*t))) )
-        final = mp.CompositeVideoClip([my_video, txt_col.set_position((0, my_video.h - my_text.h - 90)),txt_col2.set_position((0, my_video.h - my_text.h - 50))])
-        final.subclip(0, clip_duration).write_videofile(os.getcwd()+"\Clips_Final\clip_{}_{}.mp4".format(url, counter), fps=30, codec="libx264")
+# def add_text_to_video(comment, url, counter, clip_duration):
+#     print("video")
+#     comment = re.sub('\d+\d+:+\d+\d', '', comment)
+#     comment = re.sub('\d+:+\d+\d', '', comment)
+#     if len(comment) < 101:
+#         my_video = mp.VideoFileClip(os.getcwd()+"\Clips\clip_{}_{}.mp4".format(url, counter), audio=True)
+#         w,h = moviesize = my_video.size
+#         my_text = mp.TextClip(comment, font="Amiri-regular", color="white", fontsize=24)
+#         txt_col = my_text.on_color(size=(my_video.w, my_text.h+11), color=(0,0,0), pos=(10, "center"), col_opacity=0.6)
+#
+#
+#
+#         #txt_mov = txt_col.set_pos( lambda t: (max(w/30,int(w-0.5*w*t)),max(5*h/6,int(100*t))) )
+#         final = mp.CompositeVideoClip([my_video,txt_col.set_position((0,my_video.h-my_text.h-50))])
+#         final.subclip(0, clip_duration).write_videofile(os.getcwd()+"\Clips_Final\clip_{}_{}.mp4".format(url, counter),fps=60,codec="libx264")
+#
+#     elif len(comment) <202:
+#         comment1 = comment[0:101]
+#         comment2 = comment[101:201]
+#         comment2 = comment2.lstrip()
+#
+#         my_video = mp.VideoFileClip(os.getcwd()+"\Clips\clip_{}_{}.mp4".format(url, counter), audio=True)
+#         w, h = moviesize = my_video.size
+#         my_text = mp.TextClip(comment1, font="Amiri-regular", color="white", fontsize=24)
+#         txt_col = my_text.on_color(size=(my_video.w, my_text.h + 11), color=(0, 0, 0), pos=(10, "center"),
+#                                    col_opacity=0.6)
+#         print(my_text.h)
+#         my_text2 = mp.TextClip(comment2, font="Amiri-regular", color="white", fontsize=24)
+#         txt_col2 = my_text2.on_color(size=(my_video.w, my_text.h+ 11), color=(0,0,0), pos=(10, "center"), col_opacity=0.6)
+#         # ,txt_col2.set_position((0,my_video.h-my_text.h-150))
+#
+#         # txt_mov = txt_col.set_pos( lambda t: (max(w/30,int(w-0.5*w*t)),max(5*h/6,int(100*t))) )
+#         final = mp.CompositeVideoClip([my_video, txt_col.set_position((0, my_video.h - my_text.h - 90)),txt_col2.set_position((0, my_video.h - my_text.h - 50))])
+#         final.subclip(0, clip_duration).write_videofile(os.getcwd()+"\Clips_Final\clip_{}_{}.mp4".format(url, counter), fps=30, codec="libx264")
 
 def get_startTime_and_endTime(url):
     load_dotenv()
@@ -272,7 +286,7 @@ def main(url):
     cut_video(url)
 
 
-if __name__ == "__main__":
+#if __name__ == "__main__":
     # download_yt_video("https://www.youtube.com/watch?v=y6H8qRLcFCw")
     # time.sleep(20)
     #cut_video("https://www.youtube.com/watch?v=y6H8qRLcFCw")
@@ -280,4 +294,4 @@ if __name__ == "__main__":
     # link = "https://www.youtube.com/watch?v=BDbWpN80PT4"
     # download_yt_video(link)
     # print(" ")
-    main("https://www.youtube.com/watch?v=BDbWpN80PT4")
+    #main("https://www.youtube.com/watch?v=BDbWpN80PT4")
