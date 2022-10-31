@@ -223,13 +223,17 @@ def ScrapComment(url):
             if len(time_array) == 0:
                 first_comment = driver.find_element(By.XPATH,
                                                     "//*[@id='contents']/ytd-comment-thread-renderer[1]")
-                first_comment.screenshot(os.getcwd()+"\\screenshots_of_comments\\first.png")
+                if not os.path.exists(os.getcwd()+"\\screenshots_of_comments\\{}".format(url[32:43])):
+                    os.makedirs(os.getcwd()+"\\screenshots_of_comments\\{}".format(url[32:43]))
+                first_comment.screenshot(os.getcwd()+"\\screenshots_of_comments\\{}\\first.png".format(url[32:43]))
             time_array.append(comment_div_array[i])
             comment = driver.find_element(By.XPATH, "//*[@id='contents']/ytd-comment-thread-renderer[{}]".format(i + 1))
 
             time.sleep(2)
-            comment.screenshot(os.getcwd()+"\\screenshots_of_comments\\screen_{}_{}.png".format(url[32:43], i + 1))
-            counter_array.append(i+1)
+            if not os.path.exists(os.getcwd() + "\\screenshots_of_comments\\{}".format(url[32:43])):
+                os.makedirs(os.getcwd() + "\\screenshots_of_comments\\{}".format(url[32:43]))
+            comment.screenshot(os.getcwd()+"\\screenshots_of_comments\\{}\\screen_{}.png".format(url[32:43], i + 1))
+            counter_array.append(int(i+1))
             print("screenshot saved")
             i += 1
         else:
@@ -366,12 +370,12 @@ def main(url):
 if __name__ == "__main__":
     #load_dotenv()
     # print(get_youtube_urls())
-    # for i in range(len(get_youtube_urls())):
-    #     main("https://www.youtube.com/watch?v={}".format(get_youtube_urls()[i]))
+    for i in range(len(get_youtube_urls())):
+        main("https://www.youtube.com/watch?v={}".format(get_youtube_urls()[i]))
     #urls = Scrap_Trends_for_URLS()
     # for i in range(len(urls)):
     #     main("https://www.youtube.com{}".format(urls[i]))
-    main("https://www.youtube.com/watch?v=ZcroXCL2Qcs")
+    #main("https://www.youtube.com/watch?v=CFtMd9ILjMY")
 
 
 

@@ -24,7 +24,7 @@ def  cut_video(url):
     all_data = [document for document in collection.find({"URL": "{}".format(url)})]
     if all_data == None:
         print("no entrys found in db")
-    duration = get_length(os.getcwd()+"\Videos\{}.mp4".format(all_data[0]["URL"][32:43]))
+    duration = get_length(os.getcwd()+"\Videos\{}.mp4".format(url[32:43]))
 
     print("")
 
@@ -39,22 +39,24 @@ def  cut_video(url):
 
     #time_format = time.strftime("%M:%S", time.gmtime(secs))
     #end_time = time.strftime("%M:%S", time.gmtime(secs+int(duration)))
-    try:
-        for i in range(len(all_data)):
+
+    for i in range(len(all_data)):
+        try:
             if all_data[i]["Starttime"] > round(duration)-1:
                 continue
             else:
                 clip = VideoFileClip(os.getcwd()+"\Videos\{}.mp4".format(all_data[i]["URL"][32:43])).subclip(all_data[i]["Starttime"], all_data[i]["Endtime"])
-                clip.to_videofile(os.getcwd()+"\Clips\clip_{}_{}.mp4".format(all_data[i]["URL"][32:43], i), codec="libx264", temp_audiofile='temp-audio.m4a', remove_temp=True, audio_codec='aac')
+                clip.to_videofile(os.getcwd()+"\Clips\clip_{}_{}.mp4".format(all_data[i]["URL"][32:43], all_data[i]["Counter"]), codec="libx264", temp_audiofile='temp-audio.m4a', remove_temp=True, audio_codec='aac')
                 clip.close()
                 time.sleep(2)
-                clip_duration = all_data[i]["Endtime"] - all_data[i]["Starttime"]
+                #clip_duration = all_data[i]["Endtime"] - all_data[i]["Starttime"]
                 #add_text_to_video(all_data[i]["Comment"], all_data[i]["URL"][32:43], i, clip_duration)
-                add_screen_to_clip(all_data[i]["URL"], all_data[i]["Counter"])
-                print("")
-    except:
-        print("error")
-        #time.sleep(10)
+                add_screen_to_clip(all_data[i]["URL"][32:43], int(all_data[i]["Counter"]))
+                print("final clip done")
+        except:
+            print("error at URL = "+ all_data[i]["URL"][32:43]+ "\n", "Counter= " + str(all_data[i]["Counter"]))
+            continue
+            #time.sleep(10)
 
 def get_length(filename):
     result = subprocess.run(["ffprobe", "-v", "error", "-show_entries",
@@ -66,23 +68,24 @@ def get_length(filename):
 
 def download_yt_video(url):
     try:
-        if os.path.exists(os.getcwd()+"/Videos" + url[32:43] + ".mp4"):
+        if os.path.exists(os.getcwd()+"\Videos" + url[32:43] + ".mp4"):
+            print("Video already exists")
             pass
         else:
             yt = YouTube(url)
             stream = yt.streams.get_highest_resolution()
             print(stream.filesize_approx)
-            stream.download(os.getcwd()+"/Videos", filename=url[32:43] + ".mp4")
-            print('Task Completed!')
-            return(stream.title)
+            stream.download(os.getcwd()+"\Videos", filename=url[32:43] + ".mp4")
+            print('Download Completed!' + stream.title)
+
 
     except:
-        print("error")
+        print("download error")
 
 def add_screen_to_clip(url, counter):
     video = mp.VideoFileClip(os.getcwd()+"\Clips\clip_{}_{}.mp4".format(url, counter))
 
-    logo = (mp.ImageClip(os.getcwd()+"\screenshots_of_comments\screen_{}_{}.png".format(url[32:43], counter + 1))
+    logo = (mp.ImageClip(os.getcwd()+"\screenshots_of_comments\{}\screen_{}.png".format(url, counter))
               .set_opacity(0.8)
               .set_duration(video.duration)
               #.resize(width=video.w-100) # if you need to resize...
@@ -90,7 +93,9 @@ def add_screen_to_clip(url, counter):
               .set_pos(("center", "bottom")))
 
     final = mp.CompositeVideoClip([video, logo])
-    final.write_videofile(os.getcwd()+"\Clips_Final\clip_{}_{}.mp4".format(url, counter),fps=60,codec="libx264")
+    if not os.path.exists(os.getcwd()+"\Clips_Final\{}".format(url)):
+        os.makedirs(os.getcwd()+"\Clips_Final\{}".format(url))
+    final.write_videofile(os.getcwd()+"\Clips_Final\{}\clip_{}.mp4".format(url, counter),fps=60,codec="libx264")
 
 
 # def add_text_to_video(comment, url, counter, clip_duration):
@@ -145,6 +150,7 @@ def get_startTime_and_endTime(url):
     author_arr = []
     URL_arr = []
     timestamp_arr = []
+    counter_arr = []
 
     for i in range(len(all_data)):
         comment = all_data[i]["Comment"]
@@ -153,6 +159,7 @@ def get_startTime_and_endTime(url):
         comment_arr.append(comment)
         author_arr.append(all_data[i]["Author"])
         URL_arr.append(all_data[i]["URL"])
+        counter_arr.append(int(all_data[i]["Counter"]))
 
         if len(all_data[i]["Timestamp"]) == 4:  # add a 0 if start_time string 0:00 format 00:00 required
             to_add = "0"
@@ -206,7 +213,7 @@ def get_startTime_and_endTime(url):
                     start_and_endtime["Starttime"].append(timestamps[i])
                     start_and_endtime["Endtime"].append(timestamps[i] + 15)
     except:
-        print("error")
+        print("error 2")
 
     liste = []
     try:
@@ -215,7 +222,7 @@ def get_startTime_and_endTime(url):
     except:
         print("timestamp error")
     print(liste)
-    final_df = pd.DataFrame({"Comment": comment_arr, "Author": author_arr, "URL": URL_arr, "Starttime": start_and_endtime["Starttime"], "Endtime": start_and_endtime["Endtime"]})
+    final_df = pd.DataFrame({"Comment": comment_arr, "Author": author_arr, "URL": URL_arr, "Starttime": start_and_endtime["Starttime"], "Endtime": start_and_endtime["Endtime"], "Counter": counter_arr})
 
     print("")
 
