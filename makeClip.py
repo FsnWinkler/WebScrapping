@@ -10,6 +10,8 @@ import moviepy.editor as mp
 import re
 from moviepy.editor import VideoFileClip
 import time
+
+from pytube.cli import on_progress
 from scenedetect import open_video, ContentDetector, SceneManager, StatsManager
 import pandas as pd
 import os.path
@@ -72,11 +74,14 @@ def download_yt_video(url):
             print("Video already exists")
             pass
         else:
-            yt = YouTube(url)
+            yt = YouTube(url, on_progress_callback=on_progress)
             stream = yt.streams.get_highest_resolution()
             print(stream.filesize_approx)
             stream.download(os.getcwd()+"\Videos", filename=url[32:43] + ".mp4")
             print('Download Completed!' + stream.title)
+
+            #if os.path.exists(os.getcwd()+"\Videos" + url[32:43] + ".mp4"):
+
 
 
     except:
@@ -287,7 +292,7 @@ def find_scenes(video_path):
 
 def main(url):
     download_yt_video(url)
-    time.sleep(20)
+    time.sleep(200)
     get_startTime_and_endTime(url)
     time.sleep(5)
     cut_video(url)

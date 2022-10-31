@@ -54,9 +54,10 @@ def Scrap_Trends_for_URLS():
     all_hrefs = []
 
     for a in soup.find_all('a', href=True):
-        print("Found the URL:", a['href'])
         all_hrefs.append(a["href"])
     urls = list(set([i for i in all_hrefs if i.__contains__("watch")]))
+    for y in range(len(urls)):
+        print("Found the URL: " + str(urls[y]))
     driver.quit()
     return urls
 
@@ -370,11 +371,11 @@ def main(url):
 if __name__ == "__main__":
     #load_dotenv()
     # print(get_youtube_urls())
-    for i in range(len(get_youtube_urls())):
-        main("https://www.youtube.com/watch?v={}".format(get_youtube_urls()[i]))
-    #urls = Scrap_Trends_for_URLS()
-    # for i in range(len(urls)):
-    #     main("https://www.youtube.com{}".format(urls[i]))
+    # for i in range(len(get_youtube_urls())):
+    #     main("https://www.youtube.com/watch?v={}".format(get_youtube_urls()[i]))
+    urls = Scrap_Trends_for_URLS()
+    for i in range(len(urls)):
+        main("https://www.youtube.com{}".format(urls[i]))
     #main("https://www.youtube.com/watch?v=CFtMd9ILjMY")
 
 
