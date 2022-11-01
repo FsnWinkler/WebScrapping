@@ -13,6 +13,7 @@ from pytube.cli import on_progress
 from scenedetect import open_video, ContentDetector, SceneManager, StatsManager
 import pandas as pd
 import os.path
+import collections
 
 def cut_video(url):
     load_dotenv()
@@ -41,22 +42,23 @@ def cut_video(url):
 
     #time_format = time.strftime("%M:%S", time.gmtime(secs))
     #end_time = time.strftime("%M:%S", time.gmtime(secs+int(duration)))
-
-    for i in range(len(all_data)):
+    sorted_data = sorted(all_data, key=lambda d: d['Likes'], reverse=True)
+    for i in range(len(sorted_data)):
         try:
-            if all_data[i]["Starttime"] > round(duration)-1:
+            if sorted_data[i]["Starttime"] > round(duration)-1:
                 continue
+
             else:
-                clip = VideoFileClip(os.getcwd()+"\Videos\{}.mp4".format(all_data[i]["URL"][32:43])).subclip(all_data[i]["Starttime"], all_data[i]["Endtime"])
-                clip.to_videofile(os.getcwd()+"\Clips\clip_{}_{}.mp4".format(all_data[i]["URL"][32:43], int(all_data[i]["Counter"])), codec="libx264", temp_audiofile='temp-audio.m4a', remove_temp=True, audio_codec='aac')
+                clip = VideoFileClip(os.getcwd()+"\Videos\{}.mp4".format(sorted_data[i]["URL"][32:43])).subclip(sorted_data[i]["Starttime"], sorted_data[i]["Endtime"])
+                clip.to_videofile(os.getcwd()+"\Clips\clip_{}_{}.mp4".format(sorted_data[i]["URL"][32:43], int(sorted_data[i]["Counter"])), codec="libx264", temp_audiofile='temp-audio.m4a', remove_temp=True, audio_codec='aac')
                 clip.close()
                 time.sleep(2)
                 #clip_duration = all_data[i]["Endtime"] - all_data[i]["Starttime"]
                 #add_text_to_video(all_data[i]["Comment"], all_data[i]["URL"][32:43], i, clip_duration)
-                add_screen_to_clip(all_data[i]["URL"][32:43], int(all_data[i]["Counter"]))
+                add_screen_to_clip(sorted_data[i]["URL"][32:43], int(sorted_data[i]["Counter"]), i)
                 print("final clip done")
         except:
-            print("error at URL = "+ all_data[i]["URL"][32:43]+ "\n", "Counter= " + str(int(all_data[i]["Counter"])))
+            print("error at URL = "+ sorted_data[i]["URL"][32:43]+ "\n", "Counter= " + str(int(sorted_data[i]["Counter"])))
             continue
             #time.sleep(10)
 
@@ -87,7 +89,7 @@ def get_length(filename):
 #     except:
 #         print("download error")
 
-def add_screen_to_clip(url, counter):
+def add_screen_to_clip(url, counter, i):
     video = mp.VideoFileClip(os.getcwd()+"\Clips\clip_{}_{}.mp4".format(url, counter))
 
     logo = (mp.ImageClip(os.getcwd()+"\screenshots_of_comments\{}\screen_{}.png".format(url, counter))
@@ -100,7 +102,13 @@ def add_screen_to_clip(url, counter):
     final = mp.CompositeVideoClip([video, logo])
     if not os.path.exists(os.getcwd()+"\Clips_Final\{}".format(url)):
         os.makedirs(os.getcwd()+"\Clips_Final\{}".format(url))
-    final.write_videofile(os.getcwd()+"\Clips_Final\{}\clip_{}.mp4".format(url, counter),fps=60,codec="libx264")
+    if not os.path.exists(os.getcwd()+"\Most_Liked_Clips\{}".format(url)):
+        os.makedirs(os.getcwd()+"\Most_Liked_Clips")
+
+    if i == 0:
+        final.write_videofile(os.getcwd() + "\Most_Liked_Clips\clip_{}.mp4".format(url, counter), fps=60, codec="libx264")
+    else:
+        final.write_videofile(os.getcwd()+ "\Clips_Final\{}\clip_{}.mp4".format(url, counter),fps=60,codec="libx264")
 
 
 # def add_text_to_video(comment, url, counter, clip_duration):

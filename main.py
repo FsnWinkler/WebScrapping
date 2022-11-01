@@ -261,7 +261,7 @@ def ScrapComment(url):
                 res = "".join((to_add, str(timestamp[0])))
             else:
                 res = timestamp
-            timestamp_array.append(res)
+            timestamp_array.append(res[0])
         else:
             timestamp_array.append(None)
 
@@ -602,7 +602,7 @@ if __name__ == "__main__":
     # urls = Scrap_Trends_for_URLS()
     # for i in range(len(urls)):
     #     main("https://www.youtube.com{}".format(urls[i]))
-    main("https://www.youtube.com/watch?v=W4mUc8KVlMQ")
+    main("https://www.youtube.com/watch?v=S4k25zoxTTE")
 
     # for i in range(0,5):
     #     ScrapComment("https://www.youtube.com/watch?v={}".format(ID[i]))
