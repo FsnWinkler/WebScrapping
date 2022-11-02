@@ -44,22 +44,22 @@ def cut_video(url):
     #end_time = time.strftime("%M:%S", time.gmtime(secs+int(duration)))
     sorted_data = sorted(all_data, key=lambda d: d['Likes'], reverse=True)
     for i in range(len(sorted_data)):
-        try:
-            if sorted_data[i]["Starttime"] > round(duration)-1:
-                continue
-
-            else:
-                clip = VideoFileClip(os.getcwd()+"\Videos\{}.mp4".format(sorted_data[i]["URL"][32:43])).subclip(sorted_data[i]["Starttime"], sorted_data[i]["Endtime"])
-                clip.to_videofile(os.getcwd()+"\Clips\clip_{}_{}.mp4".format(sorted_data[i]["URL"][32:43], int(sorted_data[i]["Counter"])), codec="libx264", temp_audiofile='temp-audio.m4a', remove_temp=True, audio_codec='aac')
-                clip.close()
-                time.sleep(2)
-                #clip_duration = all_data[i]["Endtime"] - all_data[i]["Starttime"]
-                #add_text_to_video(all_data[i]["Comment"], all_data[i]["URL"][32:43], i, clip_duration)
-                add_screen_to_clip(sorted_data[i]["URL"][32:43], int(sorted_data[i]["Counter"]), i)
-                print("final clip done")
-        except:
-            print("error at URL = "+ sorted_data[i]["URL"][32:43]+ "\n", "Counter= " + str(int(sorted_data[i]["Counter"])))
+        #try:
+        if sorted_data[i]["Starttime"] > round(duration)-1:
             continue
+
+        else:
+            clip = VideoFileClip(os.getcwd()+"\Videos\{}.mp4".format(sorted_data[i]["URL"][32:43])).subclip(int(sorted_data[i]["Starttime"]), int(sorted_data[i]["Endtime"]))
+            clip.to_videofile(os.getcwd()+"\Clips\clip_{}_{}.mp4".format(sorted_data[i]["URL"][32:43], int(sorted_data[i]["Counter"])), codec="libx264", temp_audiofile='temp-audio.m4a', remove_temp=True, audio_codec='aac')
+            clip.close()
+            time.sleep(2)
+            #clip_duration = all_data[i]["Endtime"] - all_data[i]["Starttime"]
+            #add_text_to_video(all_data[i]["Comment"], all_data[i]["URL"][32:43], i, clip_duration)
+            add_screen_to_clip(sorted_data[i]["URL"][32:43], int(sorted_data[i]["Counter"]), i)
+            print("final clip done")
+        # except:
+        #     print("error at URL = "+ sorted_data[i]["URL"][32:43]+ "\n", "Counter= " + str(int(sorted_data[i]["Counter"])))
+        #     continue
             #time.sleep(10)
 
 def get_length(filename):
@@ -102,7 +102,7 @@ def add_screen_to_clip(url, counter, i):
     final = mp.CompositeVideoClip([video, logo])
     if not os.path.exists(os.getcwd()+"\Clips_Final\{}".format(url)):
         os.makedirs(os.getcwd()+"\Clips_Final\{}".format(url))
-    if not os.path.exists(os.getcwd()+"\Most_Liked_Clips\{}".format(url)):
+    if not os.path.exists(os.getcwd()+"\Most_Liked_Clips"):
         os.makedirs(os.getcwd()+"\Most_Liked_Clips")
 
     if i == 0:

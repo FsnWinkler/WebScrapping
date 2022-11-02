@@ -26,6 +26,7 @@ def Scrap_Trends_for_URLS():
     options.add_argument('--no-sandbox')
     options.add_argument("--headless")
     options.add_argument('--disable-dev-shm-usage')
+    options.add_argument("--force-dark-mode")
     driver = webdriver.Chrome('./chromedriver', options=options)  # options=options
     driver.get("https://www.youtube.com/feed/explore")
     time.sleep(2)
@@ -249,19 +250,23 @@ def ScrapComment(url):
 
     # -------------------------make $timestamp array-------------------------------
     timestamp_as_secounds = []
+    # time_as_no_Nones = [i for i in timestamp_as_secounds if i is not None]
+    # print(time_as_no_Nones)
     timestamp_array = []
+    # time_no_Nones = [i for i in timestamp_array if i is not None]
+    # print(time_no_Nones)
     for item in comment_div_array:
         timestamp = re.findall("[0-9]+[0-9]+[:]+[0-9]+[0-9]" and "[0-9]+[:]+[0-9]+[0-9]", item)
         if timestamp:
-            if len(str(timestamp[0])) == 4:
+            if len(timestamp[0]) == 4:
                 to_add = "0"
-                res = "".join((to_add, str(timestamp[0])))
-            elif len(str(timestamp[0])) == 7:
+                res = "".join((to_add, timestamp[0]))
+            elif len(timestamp[0]) == 7:
                 to_add = "0"
-                res = "".join((to_add, str(timestamp[0])))
+                res = "".join((to_add, timestamp[0]))
             else:
-                res = timestamp
-            timestamp_array.append(res[0])
+                res = timestamp[0]
+            timestamp_array.append(res)
         else:
             timestamp_array.append(None)
 
@@ -299,7 +304,9 @@ def ScrapComment(url):
     # -------------------------make $start and endtime arrays-------------------------------
     begin_of_scenes = find_scenes(os.getcwd() + "\Videos\{}.mp4".format(url[32:43]))
     start_times = []
+    start_no_Nones  = [i for i in start_times if i is not None]
     end_times = []
+    end_no_Nones = [i for i in end_times if i is not None]
     try:
         for i in range(len(timestamp_as_secounds)):
             if timestamp_as_secounds[i] == None:
@@ -602,7 +609,7 @@ if __name__ == "__main__":
     # urls = Scrap_Trends_for_URLS()
     # for i in range(len(urls)):
     #     main("https://www.youtube.com{}".format(urls[i]))
-    main("https://www.youtube.com/watch?v=S4k25zoxTTE")
+    main("https://www.youtube.com/watch?v=3Q3c4E9COXs")
 
     # for i in range(0,5):
     #     ScrapComment("https://www.youtube.com/watch?v={}".format(ID[i]))
