@@ -105,7 +105,7 @@ def add_screen_to_clip(url, counter, i):
         os.makedirs(os.getcwd()+"\\Clips_Final\\Trends\\{}".format(url))
 
     if not os.path.exists(os.getcwd()+"\\Clips_Final\\Most_Liked_Clips"):
-        os.makedirs(os.getcwd()+"\\Most_Liked_Clips")
+        os.makedirs(os.getcwd()+"\\Clips_Final\\Most_Liked_Clips")
 
     if not os.path.exists(os.getcwd()+"\\Clips_Final\\Comedy\\{}".format(url)):
         os.makedirs(os.getcwd()+"\\Clips_Final\Comedy\\{}".format(url))
@@ -117,7 +117,7 @@ def add_screen_to_clip(url, counter, i):
         os.makedirs(os.getcwd()+"\\Clips_Final\\People\\{}".format(url))
 
     if i == 0:
-        clipname = os.getcwd() + "\\Most_Liked_Clips\\clip_{}.mp4".format(url, counter)
+        clipname = os.getcwd() + "\\Clips_Final\\Most_Liked_Clips\\clip_{}.mp4".format(url, counter)
         final.write_videofile(clipname, fps=60, codec="libx264")
     else:
         clipname = os.getcwd() + "\\Clips_Final\\Trends\\clip_{}_{}.mp4".format(url, counter)
