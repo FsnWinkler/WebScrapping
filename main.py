@@ -15,7 +15,7 @@ import re
 import json
 import makeClip
 from scenedetect import open_video, ContentDetector, SceneManager, StatsManager
-import pandas as pd
+
 from pytube import YouTube
 from pytube.cli import on_progress
 import threading
@@ -592,7 +592,6 @@ def main(url):
         ScrapComment(url)
         time.sleep(5)
         makeClip.main(url)
-        write_url(url)
     else:
         pass
 

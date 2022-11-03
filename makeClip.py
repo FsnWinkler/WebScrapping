@@ -9,6 +9,7 @@ import moviepy.editor as mp
 import re
 from moviepy.editor import VideoFileClip
 import time
+from datetime import datetime
 from pytube.cli import on_progress
 from scenedetect import open_video, ContentDetector, SceneManager, StatsManager
 import pandas as pd
@@ -100,16 +101,30 @@ def add_screen_to_clip(url, counter, i):
               .set_pos(("center", "bottom")))
 
     final = mp.CompositeVideoClip([video, logo])
-    if not os.path.exists(os.getcwd()+"\Clips_Final\{}".format(url)):
-        os.makedirs(os.getcwd()+"\Clips_Final\{}".format(url))
-    if not os.path.exists(os.getcwd()+"\Most_Liked_Clips"):
-        os.makedirs(os.getcwd()+"\Most_Liked_Clips")
+    if not os.path.exists(os.getcwd()+"\\Clips_Final\\Trends\\{}".format(url)):
+        os.makedirs(os.getcwd()+"\\Clips_Final\\Trends\\{}".format(url))
+
+    if not os.path.exists(os.getcwd()+"\\Clips_Final\\Most_Liked_Clips"):
+        os.makedirs(os.getcwd()+"\\Most_Liked_Clips")
+
+    if not os.path.exists(os.getcwd()+"\\Clips_Final\\Comedy\\{}".format(url)):
+        os.makedirs(os.getcwd()+"\\Clips_Final\Comedy\\{}".format(url))
+
+    if not os.path.exists(os.getcwd()+"\\Clips_Final\\News\\{}".format(url)):
+        os.makedirs(os.getcwd()+"\\Clips_Final\\News\\{}".format(url))
+
+    if not os.path.exists(os.getcwd()+"\\Clips_Final\\People\\{}".format(url)):
+        os.makedirs(os.getcwd()+"\\Clips_Final\\People\\{}".format(url))
 
     if i == 0:
-        final.write_videofile(os.getcwd() + "\Most_Liked_Clips\clip_{}.mp4".format(url, counter), fps=60, codec="libx264")
+        clipname = os.getcwd() + "\\Most_Liked_Clips\\clip_{}.mp4".format(url, counter)
+        final.write_videofile(clipname, fps=60, codec="libx264")
     else:
-        final.write_videofile(os.getcwd()+ "\Clips_Final\{}\clip_{}.mp4".format(url, counter),fps=60,codec="libx264")
+        clipname = os.getcwd() + "\\Clips_Final\\Trends\\clip_{}_{}.mp4".format(url, counter)
+        final.write_videofile(clipname, fps=60, codec="libx264")
 
+    write_url(clipname)
+    print("sucsessfully created clip: " + clipname)
 
 # def add_text_to_video(comment, url, counter, clip_duration):
 #     print("video")
@@ -146,7 +161,11 @@ def add_screen_to_clip(url, counter, i):
 #         final = mp.CompositeVideoClip([my_video, txt_col.set_position((0, my_video.h - my_text.h - 90)),txt_col2.set_position((0, my_video.h - my_text.h - 50))])
 #         final.subclip(0, clip_duration).write_videofile(os.getcwd()+"\Clips_Final\clip_{}_{}.mp4".format(url, counter), fps=30, codec="libx264")
 
-
+def write_url(clipname):
+    now = datetime.now()
+    current_time = now.strftime("%H:%M:%S")
+    with open("urls.json", "a") as file:
+        file.write("\n" + current_time + " " + clipname)
 
 def main(url):
     #download_yt_video(url)
