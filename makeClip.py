@@ -123,7 +123,7 @@ def add_screen_to_clip(url, counter, i):
         clipname = os.getcwd() + "\\Clips_Final\\Trends\\clip_{}_{}.mp4".format(url, counter)
         final.write_videofile(clipname, fps=60, codec="libx264")
 
-    write_url(clipname)
+    write_url(clipname[30:])
     print("sucsessfully created clip: " + clipname)
 
 # def add_text_to_video(comment, url, counter, clip_duration):
@@ -173,6 +173,7 @@ def main(url):
     # #get_startTime_and_endTime(url)
     # time.sleep(5)
     cut_video(url)
+    write_url(url)
 
 
 #if __name__ == "__main__":

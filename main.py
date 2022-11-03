@@ -90,10 +90,15 @@ def insert_db(data, col):
         for i in range(len(data)):
             if collection.find_one({"Comment": data["Comment"].iloc[i]}):
                 dataset = collection.find_one({"Comment": data["Comment"].iloc[i]})
+                if dataset.get("Counter") != data["Counter"].iloc[i].item():
+                    new_counter = {"$set": {"Counter": data["Counter"].iloc[i].item()}}
+                    collection.update_one(dataset, new_counter)
+                    print("succsessfully  updated Counter {} to {}  into database".format(dataset, new_counter))
+
                 if dataset.get("Likes") < data["Likes"].iloc[i].item():
                     newvalues = {"$set": {"Likes": data["Likes"].iloc[i].item()}}
                     collection.update_one(dataset, newvalues)
-                    print("succsessfully  updated {} to {}  into database".format(dataset, newvalues))
+                    print("succsessfully  updated Likes {} to {}  into database".format(dataset, newvalues))
                 else:
                     print("Likes are up to date!")
 
@@ -355,14 +360,14 @@ def ScrapComment(url):
 
 def download_yt_video(url):
     try:
-        if os.path.exists(os.getcwd()+"\Videos" + url[32:43] + ".mp4"):
+        if os.path.exists(os.getcwd()+"\\Videos\\" + url[32:43] + ".mp4"):
             print("Video already exists")
             pass
         else:
             yt = YouTube(url, on_progress_callback=on_progress)
             stream = yt.streams.get_highest_resolution()
             print(stream.filesize_approx)
-            stream.download(os.getcwd()+"\Videos", filename=url[32:43] + ".mp4")
+            stream.download(os.getcwd()+"\\Videos", filename=url[32:43] + ".mp4")
             print('Download Completed!' + stream.title)
 
             #if os.path.exists(os.getcwd()+"\Videos" + url[32:43] + ".mp4"):
