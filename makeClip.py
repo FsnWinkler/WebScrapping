@@ -1,3 +1,4 @@
+import shutil
 import subprocess
 from dotenv import load_dotenv
 import os
@@ -167,6 +168,16 @@ def write_url(clipname):
     with open("urls.json", "a") as file:
         file.write("\n" + current_time + " " + clipname)
 
+def delete_all(folder):
+    folder_path = os.getcwd()+"\\{}".format(folder)
+    for file_object in os.listdir(folder_path):
+        file_object_path = os.path.join(folder_path, file_object)
+        if os.path.isfile(file_object_path) or os.path.islink(file_object_path):
+            os.unlink(file_object_path)
+        else:
+            shutil.rmtree(file_object_path)
+
+
 def main(url):
     #download_yt_video(url)
     # time.sleep(200)
@@ -174,6 +185,8 @@ def main(url):
     # time.sleep(5)
     cut_video(url)
     write_url(url)
+    delete_all("Clips")
+    delete_all("Videos")
 
 
 #if __name__ == "__main__":
