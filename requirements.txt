@@ -1,0 +1,9 @@
+pandas~=1.5.0
+pymongo~=4.2.0
+selenium~=4.5.0
+beautifulsoup4~=4.11.1
+python-dotenv~=0.21.0
+scenedetect~=0.6.0.3
+pytube~=12.1.0
+opencv-python~=4.5.3.56
+moviepy~=1.0.3
