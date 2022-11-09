@@ -20,7 +20,7 @@ import collections
 def cut_video(url):
     load_dotenv()
     cluster = pymongo.MongoClient(
-        os.getenv("db_key"))
+        os.getenv("DB_KEY"))
     db = cluster["test"]
     collection = db["comments"]
     # pymongo_cursor = collection.find({})
@@ -100,31 +100,34 @@ def add_screen_to_clip(url, counter, i):
               #.resize(width=video.w-100) # if you need to resize...
               .margin(left=10, bottom=10, opacity=0) # (optional) logo-border padding
               .set_pos(("center", "bottom")))
-
     final = mp.CompositeVideoClip([video, logo])
-    if not os.path.exists(os.getcwd()+"\\Clips_Final\\Trends\\{}".format(url)):
-        os.makedirs(os.getcwd()+"\\Clips_Final\\Trends\\{}".format(url))
 
-    if not os.path.exists(os.getcwd()+"\\Clips_Final\\Most_Liked_Clips"):
-        os.makedirs(os.getcwd()+"\\Clips_Final\\Most_Liked_Clips")
+    PATH = os.getenv("PATH")
+    if not os.path.exists(PATH+"\\Clips_Final\\Trends\\{}".format(url)):
+        os.makedirs(PATH+"\\Clips_Final\\Trends\\{}".format(url))
 
-    if not os.path.exists(os.getcwd()+"\\Clips_Final\\Comedy\\{}".format(url)):
-        os.makedirs(os.getcwd()+"\\Clips_Final\Comedy\\{}".format(url))
+    if not os.path.exists(PATH+"\\Clips_Final\\Most_Liked_Clips"):
+        os.makedirs(PATH+"\\Clips_Final\\Most_Liked_Clips")
 
-    if not os.path.exists(os.getcwd()+"\\Clips_Final\\News\\{}".format(url)):
-        os.makedirs(os.getcwd()+"\\Clips_Final\\News\\{}".format(url))
+    if not os.path.exists(PATH+"\\Clips_Final\\Comedy\\{}".format(url)):
+        os.makedirs(PATH+"\\Clips_Final\Comedy\\{}".format(url))
 
-    if not os.path.exists(os.getcwd()+"\\Clips_Final\\People\\{}".format(url)):
-        os.makedirs(os.getcwd()+"\\Clips_Final\\People\\{}".format(url))
+    if not os.path.exists(PATH+"\\Clips_Final\\News\\{}".format(url)):
+        os.makedirs(PATH+"\\Clips_Final\\News\\{}".format(url))
+
+    if not os.path.exists(PATH+"\\Clips_Final\\People\\{}".format(url)):
+        os.makedirs(PATH+"\\Clips_Final\\People\\{}".format(url))
 
     if i == 0:
-        clipname = os.getcwd() + "\\Clips_Final\\Most_Liked_Clips\\clip_{}.mp4".format(url, counter)
+        clipname = PATH + "\\Clips_Final\\Most_Liked_Clips\\clip_{}.mp4".format(url, counter)
         final.write_videofile(clipname, fps=60, codec="libx264")
     else:
-        clipname = os.getcwd() + "\\Clips_Final\\Trends\\clip_{}_{}.mp4".format(url, counter)
+        clipname = PATH + "\\Clips_Final\\Trends\\clip_{}_{}.mp4".format(url, counter)
         final.write_videofile(clipname, fps=60, codec="libx264")
 
-    write_url(clipname[30:])
+
+
+    write_url(clipname[33:])
     print("sucsessfully created clip: " + clipname)
 
 # def add_text_to_video(comment, url, counter, clip_duration):

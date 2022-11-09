@@ -15,10 +15,79 @@ import re
 import json
 import makeClip
 from scenedetect import open_video, ContentDetector, SceneManager, StatsManager
-
+#import onedrivesdk
+import webbrowser
+from msal import ConfidentialClientApplication#, PuplicClientApplication
 from pytube import YouTube
 from pytube.cli import on_progress
 import threading
+import msal
+
+import sys  # For simplicity, we'll read config file from 1st CLI param sys.argv[1]
+import json
+import logging
+from msal import PublicClientApplication
+import requests
+import msal
+
+from ms_graph import generate_access_token, GRAPH_API_ENDPOINT
+
+# def generate_acces_token(app_id, scopes):
+#     access_token_cache = msal.SerializableTokenCache()
+#     #read the token file
+#     if os.path.exists("api_token_access.json"):
+#         access_token_cache.deserialize(open("api_token_access.json", "r").read())
+#
+#     client = PublicClientApplication(client_id=app_id, token_cache=access_token_cache)
+#     accounts = client.get_accounts()
+#     if accounts:
+#         token_response = client.acquire_token_silent(scopes, accounts[0])
+#     else:
+#         flow = client.initiate_device_flow(scopes=scopes)
+#         print("user code: " + flow["user_code"])
+#         webbrowser.open(flow["verification_uri"])
+#         token_response = client.acquire_token_by_device_flow(flow)
+#         print(token_response)
+#
+#     with open("api_token_access.json", "w") as _f:
+#         _f.write(access_token_cache.serialize())
+#     return token_response
+#
+#
+#
+#
+# APP_ID = "d1cc361d-9067-42e9-991d-b25b3cc26e1e"
+# SCOPES = ["Files.ReadWrite.All"]
+#
+# access_token = generate_access_token(APP_ID, SCOPES)
+# headers = {
+#     "Authorization": "Bearer " + access_token["access_token"]
+# }
+#
+# file_path = "Most_Liked_Clips/clip_S4k25zoxTTE.mp4"
+#
+# with open(file_path, "rb")as upload:
+#     media_content = upload.read()
+#
+# folder_id = "C1A80FF9BCE33DB6"
+# file_name = os.path.basename(file_path)
+#
+# request_body = {
+#     "item": {
+#         "description": "vid1",
+#         "name": file_name
+#     }
+# }
+#
+# response_upload_session = requests.post(
+#     "https://graph.microsoft.com/v1.0" + f"/me/drive/items/{folder_id}:/{file_name}:/createUploadSession",
+#     headers=headers,
+#     json=request_body
+# )
+# print(response_upload_session.json())
+#
+#
+
 
 
 def Scrap_Trends_for_URLS():
@@ -74,7 +143,7 @@ def connenct_db():
             load_dotenv()
             cluster = pymongo.MongoClient(
 
-                os.getenv("db_key"))
+                os.getenv("DB_KEY"))
             db = cluster["test"]
             return db
         except:
@@ -163,31 +232,37 @@ def find_most_common_words(all_words):
 
 
 def ScrapComment(url):
+
+    chrome_path = os.getenv("CHROME_PATH")
     url_id = url[32:43]
     options = Options()
     options.add_argument('--no-sandbox')
     options.add_argument("--headless")
     options.add_argument('--disable-dev-shm-usage')
+    options.add_argument(f"user-data-dir={chrome_path}")
+    options.add_argument("profile-directory=Profile 1")
     # options.add_argument("--start-maximized")
     driver = webdriver.Chrome('./chromedriver', options=options)
 
-    driver.get("https://www.youtube.com/watch?v=NLXGrLpJ2dQ")
-    cookies_path = 'cookie'
-
-    with open(cookies_path, 'r') as file_path:
-        cookies_list = json.loads(file_path.read())
-
-    # Once on that domain, start adding cookies into the browser
-    for cookie in cookies_list:
-        # If domain is left in, then in the browser domain gets transformed to f'.{domain}'
-        cookie.pop('domain', None)
-        driver.add_cookie(cookie)
-        print("cookies loaded")
-    time.sleep(5)
-    driver.maximize_window()
+    # driver.get("https://www.youtube.com/watch?v=NLXGrLpJ2dQ")
+    # cookies_path = 'cookie'
+    #
+    # with open(cookies_path, 'r') as file_path:
+    #     cookies_list = json.loads(file_path.read())
+    #
+    # # Once on that domain, start adding cookies into the browser
+    # for cookie in cookies_list:
+    #     # If domain is left in, then in the browser domain gets transformed to f'.{domain}'
+    #     cookie.pop('domain', None)
+    #     driver.add_cookie(cookie)
+    #     print("cookies loaded")
+    # time.sleep(5)
+    # driver.maximize_window()
     driver.get(url)
-    start_time = datetime.now()
+    time.sleep(5)
+    # start_time = datetime.now()
     driver.set_window_size(1280, 800)
+    time.sleep(5)
     prev_h = 0
     while True:
         height = driver.execute_script("""
@@ -526,7 +601,7 @@ def find_scenes(video_path):
 
 def get_youtube_urls():
     load_dotenv()
-    api_key = os.getenv("api_key")
+    api_key = os.getenv("API_KEY")
     # youtube = build('youtube', 'v3', developerKey=api_key)
     api = Api(api_key=api_key)
 
@@ -604,16 +679,16 @@ def main(url):
     #     print("makeclip error")
     print("")
 
-
 if __name__ == "__main__":
-    # load_dotenv()
-    # print(get_youtube_urls())
-    # for i in range(len(get_youtube_urls())):
-    #     main("https://www.youtube.com/watch?v={}".format(get_youtube_urls()[i]))
-    # urls = Scrap_Trends_for_URLS()
-    # for i in range(len(urls)):
-    #     main("https://www.youtube.com{}".format(urls[i]))
-    main("https://www.youtube.com/watch?v=O69iN0DZdug-")
+    load_dotenv()
+#     # load_dotenv()
+#     # print(get_youtube_urls())
+#     for i in range(len(get_youtube_urls())):
+#         main("https://www.youtube.com/watch?v={}".format(get_youtube_urls()[i]))
+    urls = Scrap_Trends_for_URLS()
+    for i in range(len(urls)):
+        main("https://www.youtube.com{}".format(urls[i]))
+    #main("https://www.youtube.com/watch?v=m8tgokoz9SY")
 
     # for i in range(0,5):
     #     ScrapComment("https://www.youtube.com/watch?v={}".format(ID[i]))
