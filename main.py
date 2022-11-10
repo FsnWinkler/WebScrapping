@@ -22,6 +22,7 @@ from pytube import YouTube
 from pytube.cli import on_progress
 import threading
 import msal
+from numify import numify
 
 import sys  # For simplicity, we'll read config file from 1st CLI param sys.argv[1]
 import json
@@ -129,7 +130,7 @@ def Scrap_Trends_for_URLS():
 
     for a in soup.find_all('a', href=True):
         all_hrefs.append(a["href"])
-    urls = list(set([i for i in all_hrefs if i.__contains__("watch")]))
+    urls = list(set([i for i in all_hrefs if i.__contains__("watch?v=")]))
     for y in range(len(urls)):
         print("Found the URL: " + str(urls[y]))
     driver.quit()
@@ -367,9 +368,23 @@ def ScrapComment(url):
     like_div = soup.select("#toolbar #vote-count-left")
     like_div_stripped = []
     for item in like_div:
-        new_item = item.get_text().replace("\n", "")
-        final_item = new_item.replace(" ", "")
-        like_div_stripped.append(int(final_item))
+        replace_breaks = item.get_text().replace("\n", "")
+        replace_coma = replace_breaks.replace(",", ".")
+        replace_blanks = replace_coma.replace(" ", "")
+
+        if "K" in replace_blanks or "k" in replace_blanks:
+            final_like = numify.numify(replace_blanks)
+            like_div_stripped.append(int(final_like))
+        else:
+            like_div_stripped.append(int(replace_blanks))
+
+        # if "K" in final_item:
+        #     remove_k = final_item.replace("K", "")
+        #     remove_point = remove_k.replace(".", "")
+        #     multiply_number = int(remove_point) * 100
+        #     like_div_stripped.append(int(multiply_number))
+        # else:
+        #     like_div_stripped.append(int(final_item))
 
     # -------------------------make $author array-------------------------------
     author_div = soup.select("#header-author #author-text")
@@ -445,7 +460,7 @@ def download_yt_video(url):
             stream.download(os.getcwd()+"\\Videos", filename=url[32:43] + ".mp4")
             print('Download Completed!' + stream.title)
 
-            #if os.path.exists(os.getcwd()+"\Videos" + url[32:43] + ".mp4"):
+                #if os.path.exists(os.getcwd()+"\Videos" + url[32:43] + ".mp4"):
 
 
 
@@ -680,15 +695,21 @@ def main(url):
     print("")
 
 if __name__ == "__main__":
-    load_dotenv()
+
 #     # load_dotenv()
 #     # print(get_youtube_urls())
 #     for i in range(len(get_youtube_urls())):
 #         main("https://www.youtube.com/watch?v={}".format(get_youtube_urls()[i]))
-    urls = Scrap_Trends_for_URLS()
-    for i in range(len(urls)):
-        main("https://www.youtube.com{}".format(urls[i]))
-    #main("https://www.youtube.com/watch?v=m8tgokoz9SY")
+
+
+
+#     urls = Scrap_Trends_for_URLS()
+#     for i in range(len(urls)):
+#         main("https://www.youtube.com{}".format(urls[i]))
+
+    #
+    load_dotenv()
+    main("https://www.youtube.com/watch?v=g6NaQkQlXpg")
 
     # for i in range(0,5):
     #     ScrapComment("https://www.youtube.com/watch?v={}".format(ID[i]))

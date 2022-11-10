@@ -101,8 +101,8 @@ def add_screen_to_clip(url, counter, i):
               .margin(left=10, bottom=10, opacity=0) # (optional) logo-border padding
               .set_pos(("center", "bottom")))
     final = mp.CompositeVideoClip([video, logo])
-
-    PATH = os.getenv("PATH")
+    load_dotenv()
+    PATH = os.getenv("VIDEO_PATH")
     if not os.path.exists(PATH+"\\Clips_Final\\Trends\\{}".format(url)):
         os.makedirs(PATH+"\\Clips_Final\\Trends\\{}".format(url))
 
@@ -182,6 +182,7 @@ def delete_all(folder):
 
 
 def main(url):
+    load_dotenv()
     #download_yt_video(url)
     # time.sleep(200)
     # #get_startTime_and_endTime(url)
