@@ -1,5 +1,10 @@
 import shutil
 import subprocess
+import webbrowser
+
+import msal
+from msal import PublicClientApplication
+import requests
 from dotenv import load_dotenv
 import os
 import pymongo
@@ -57,7 +62,7 @@ def cut_video(url):
             time.sleep(2)
             #clip_duration = all_data[i]["Endtime"] - all_data[i]["Starttime"]
             #add_text_to_video(all_data[i]["Comment"], all_data[i]["URL"][32:43], i, clip_duration)
-            add_screen_to_clip(sorted_data[i]["URL"][32:43], int(sorted_data[i]["Counter"]), i)
+            add_screen_to_clip(sorted_data[i]["URL"][32:43], int(sorted_data[i]["Counter"]), i, sorted_data[i]["Timestamp"])
             print("final clip done")
         # except:
         #     print("error at URL = "+ sorted_data[i]["URL"][32:43]+ "\n", "Counter= " + str(int(sorted_data[i]["Counter"])))
@@ -91,7 +96,7 @@ def get_length(filename):
 #     except:
 #         print("download error")
 
-def add_screen_to_clip(url, counter, i):
+def add_screen_to_clip(url, counter, i, timestamp):
     video = mp.VideoFileClip(os.getcwd()+"\Clips\clip_{}_{}.mp4".format(url, counter))
 
     logo = (mp.ImageClip(os.getcwd()+"\screenshots_of_comments\{}\screen_{}.png".format(url, counter))
@@ -103,32 +108,98 @@ def add_screen_to_clip(url, counter, i):
     final = mp.CompositeVideoClip([video, logo])
     load_dotenv()
     PATH = os.getenv("VIDEO_PATH")
-    if not os.path.exists(PATH+"\\Clips_Final\\Trends\\{}".format(url)):
-        os.makedirs(PATH+"\\Clips_Final\\Trends\\{}".format(url))
+    if not os.path.exists(PATH+r"\Clips_Final\Trends\{}".format(url)):
+        os.makedirs(PATH+r"\Clips_Final\Trends\{}".format(url))
 
-    if not os.path.exists(PATH+"\\Clips_Final\\Most_Liked_Clips"):
-        os.makedirs(PATH+"\\Clips_Final\\Most_Liked_Clips")
+    if not os.path.exists(PATH+r"\Clips_Final\Most_Liked_Clips"):
+        os.makedirs(PATH+r"\Clips_Final\Most_Liked_Clips")
 
-    if not os.path.exists(PATH+"\\Clips_Final\\Comedy\\{}".format(url)):
-        os.makedirs(PATH+"\\Clips_Final\Comedy\\{}".format(url))
-
-    if not os.path.exists(PATH+"\\Clips_Final\\News\\{}".format(url)):
-        os.makedirs(PATH+"\\Clips_Final\\News\\{}".format(url))
-
-    if not os.path.exists(PATH+"\\Clips_Final\\People\\{}".format(url)):
-        os.makedirs(PATH+"\\Clips_Final\\People\\{}".format(url))
+    # if not os.path.exists(PATH+"\\Clips_Final\\Comedy\\{}".format(url)):
+    #     os.makedirs(PATH+"\\Clips_Final\Comedy\\{}".format(url))
+    #
+    # if not os.path.exists(PATH+"\\Clips_Final\\News\\{}".format(url)):
+    #     os.makedirs(PATH+"\\Clips_Final\\News\\{}".format(url))
+    #
+    # if not os.path.exists(PATH+"\\Clips_Final\\People\\{}".format(url)):
+    #     os.makedirs(PATH+"\\Clips_Final\\People\\{}".format(url))
 
     if i == 0:
-        clipname = PATH + "\\Clips_Final\\Most_Liked_Clips\\clip_{}.mp4".format(url, counter)
+        clipname = PATH + rf"\Clips_Final\Most_Liked_Clips\clip_{url}.mp4"
         final.write_videofile(clipname, fps=60, codec="libx264")
+        folder_id = os.getenv("FOLDER_ID_MOST_LIKED")
+        upload_to_onedrive(clipname, f"https://www.youtube.com/watch?v={url}", timestamp, folder_id)
     else:
-        clipname = PATH + "\\Clips_Final\\Trends\\clip_{}_{}.mp4".format(url, counter)
+        clipname = PATH + rf"\Clips_Final\Trends\clip_{url}_{counter}.mp4"
         final.write_videofile(clipname, fps=60, codec="libx264")
+        folder_id = os.getenv("FOLDER_ID_CLIPS")
+        upload_to_onedrive(clipname, f"https://www.youtube.com/watch?v={url}", timestamp, folder_id)
 
 
 
     write_url(clipname[33:])
     print("sucsessfully created clip: " + clipname)
+
+def generate_acces_token(app_id):
+    SCOPES = ["Files.ReadWrite.All"]
+    access_token_cache = msal.SerializableTokenCache()
+    if os.path.exists("api_token_access.json"):
+        access_token_cache.deserialize(open("api_token_access.json", "r").read())
+
+    client = PublicClientApplication(client_id=app_id, token_cache=access_token_cache)
+    accounts = client.get_accounts()
+    if accounts:
+        token_response = client.acquire_token_silent(SCOPES, accounts[0])
+        print("found acc")
+    else:
+        flow = client.initiate_device_flow(scopes=SCOPES)
+        print("user code: " + flow["user_code"])
+        webbrowser.open(flow["verification_uri"])
+        token_response = client.acquire_token_by_device_flow(flow)
+        print(token_response)
+
+    with open("api_token_access.json", "w") as _f:
+        _f.write(access_token_cache.serialize())
+    return token_response
+
+
+
+def upload_to_onedrive(file_path, url, timestamp, folder_id):
+    load_dotenv()
+    accsess_token = generate_acces_token(os.getenv("APP_ID"))
+    print(accsess_token)
+    headers = {
+        "Authorization": "Bearer " + accsess_token["access_token"]
+    }
+
+    file_name = os.path.basename(file_path)
+
+    if not os.path.exists(file_path):
+        raise Exception(f"{file_name} is not found")
+
+    with open(file_path, "rb")as upload:
+        media_content = upload.read()
+
+    request_body = {
+        "item": {
+            "@microsoft.graph.conflictBehavior": "rename",
+            "description": f"URL={url} Timestamp={timestamp}",
+            "name": file_name
+        }
+    }
+    response_upload_session = requests.post(
+        os.getenv("GRAPH_ENDPOINT") + f"/me/drive/items/{folder_id}:/{file_name}:/createUploadSession",
+        headers=headers,
+        json=request_body
+    )
+    print(response_upload_session.json())
+    try:
+        upload_url = response_upload_session.json()["uploadUrl"]
+        response_upload_status = requests.put(upload_url, data=media_content)
+        print(f"File: {file_path}")
+        print(response_upload_status)
+    except Exception as e:
+        print(e)
+
 
 # def add_text_to_video(comment, url, counter, clip_duration):
 #     print("video")

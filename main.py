@@ -1,4 +1,6 @@
 from collections import Counter
+
+
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium import webdriver
@@ -15,7 +17,7 @@ import re
 import json
 import makeClip
 from scenedetect import open_video, ContentDetector, SceneManager, StatsManager
-#import onedrivesdk
+
 import webbrowser
 from msal import ConfidentialClientApplication#, PuplicClientApplication
 from pytube import YouTube
@@ -31,36 +33,14 @@ from msal import PublicClientApplication
 import requests
 import msal
 
-from ms_graph import generate_access_token, GRAPH_API_ENDPOINT
+from pprint import pprint
+from configparser import ConfigParser
+from os import path
 
-# def generate_acces_token(app_id, scopes):
-#     access_token_cache = msal.SerializableTokenCache()
-#     #read the token file
-#     if os.path.exists("api_token_access.json"):
-#         access_token_cache.deserialize(open("api_token_access.json", "r").read())
-#
-#     client = PublicClientApplication(client_id=app_id, token_cache=access_token_cache)
-#     accounts = client.get_accounts()
-#     if accounts:
-#         token_response = client.acquire_token_silent(scopes, accounts[0])
-#     else:
-#         flow = client.initiate_device_flow(scopes=scopes)
-#         print("user code: " + flow["user_code"])
-#         webbrowser.open(flow["verification_uri"])
-#         token_response = client.acquire_token_by_device_flow(flow)
-#         print(token_response)
-#
-#     with open("api_token_access.json", "w") as _f:
-#         _f.write(access_token_cache.serialize())
-#     return token_response
-#
-#
-#
-#
-# APP_ID = "d1cc361d-9067-42e9-991d-b25b3cc26e1e"
-# SCOPES = ["Files.ReadWrite.All"]
-#
+from graph_onedrive import OneDrive
+
 # access_token = generate_access_token(APP_ID, SCOPES)
+# print(access_token)
 # headers = {
 #     "Authorization": "Bearer " + access_token["access_token"]
 # }
@@ -696,20 +676,20 @@ def main(url):
 
 if __name__ == "__main__":
 
-#     # load_dotenv()
-#     # print(get_youtube_urls())
-#     for i in range(len(get_youtube_urls())):
-#         main("https://www.youtube.com/watch?v={}".format(get_youtube_urls()[i]))
-
-
-
-#     urls = Scrap_Trends_for_URLS()
-#     for i in range(len(urls)):
-#         main("https://www.youtube.com{}".format(urls[i]))
-
+# #     # load_dotenv()
+# #     # print(get_youtube_urls())
+# #     for i in range(len(get_youtube_urls())):
+# #         main("https://www.youtube.com/watch?v={}".format(get_youtube_urls()[i]))
+#
+#
+#
+# #     urls = Scrap_Trends_for_URLS()
+# #     for i in range(len(urls)):
+# #         main("https://www.youtube.com{}".format(urls[i]))
+#
     #
     load_dotenv()
-    main("https://www.youtube.com/watch?v=g6NaQkQlXpg")
+    main("https://www.youtube.com/watch?v=PzNP3AHo0FY")
 
     # for i in range(0,5):
     #     ScrapComment("https://www.youtube.com/watch?v={}".format(ID[i]))
