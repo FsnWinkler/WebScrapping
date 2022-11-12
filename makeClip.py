@@ -1,7 +1,7 @@
 import shutil
 import subprocess
 import webbrowser
-
+import json
 import msal
 from msal import PublicClientApplication
 import requests
@@ -127,15 +127,16 @@ def add_screen_to_clip(url, counter, i, timestamp):
         clipname = PATH + rf"\Clips_Final\Most_Liked_Clips\clip_{url}.mp4"
         final.write_videofile(clipname, fps=60, codec="libx264")
         folder_id = os.getenv("FOLDER_ID_MOST_LIKED")
-        upload_to_onedrive(clipname, f"https://www.youtube.com/watch?v={url}", timestamp, folder_id)
+        src_link = upload_to_onedrive(clipname, f"https://www.youtube.com/watch?v={url}", timestamp, folder_id)
     else:
         clipname = PATH + rf"\Clips_Final\Trends\clip_{url}_{counter}.mp4"
         final.write_videofile(clipname, fps=60, codec="libx264")
         folder_id = os.getenv("FOLDER_ID_CLIPS")
-        upload_to_onedrive(clipname, f"https://www.youtube.com/watch?v={url}", timestamp, folder_id)
+        src_link = upload_to_onedrive(clipname, f"https://www.youtube.com/watch?v={url}", timestamp, folder_id)
 
 
-
+    print(f"*********{src_link}*********")
+    # INSERT DB SRC LINK
     write_url(clipname[33:])
     print("sucsessfully created clip: " + clipname)
 
@@ -199,6 +200,38 @@ def upload_to_onedrive(file_path, url, timestamp, folder_id):
         print(response_upload_status)
     except Exception as e:
         print(e)
+
+    return get_src_link(file_name, folder_id)
+
+def get_src_link(itemname, folder_id):
+    load_dotenv()
+    accsess_token = generate_acces_token(os.getenv("APP_ID"))
+    print(accsess_token)
+    headers = {
+        "Authorization": "Bearer " + accsess_token["access_token"]
+    }
+
+    items = json.loads(requests.get(os.getenv("GRAPH_ENDPOINT") + f'/me/drive/items/{folder_id}/children', headers=headers).text)
+    look_for_item = itemname
+    item_id = ''
+    items = items['value']
+    for entries in range(len(items)):
+        if (items[entries]['name'] == look_for_item):
+            item_id = items[entries]['id']
+            print('Item-id of', look_for_item, ':', item_id)
+            break
+    if (item_id == ''):
+        print(look_for_item, 'not found in the directory.')
+
+    request_body = {
+        "type": "embed"
+    }
+    response_get_emb = requests.post(
+        os.getenv("GRAPH_ENDPOINT") + f"/me/drive/items/{item_id}/createLink",
+        headers=headers,
+        json=request_body
+    )
+    return response_get_emb.json()["link"]["webUrl"].replace("embed", "download")
 
 
 # def add_text_to_video(comment, url, counter, clip_duration):

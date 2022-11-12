@@ -221,7 +221,7 @@ def ScrapComment(url):
     options.add_argument("--headless")
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument(f"user-data-dir={chrome_path}")
-    options.add_argument("profile-directory=Profile 1")
+    options.add_argument("profile-directory=Default")
     # options.add_argument("--start-maximized")
     driver = webdriver.Chrome('./chromedriver', options=options)
 
@@ -258,6 +258,16 @@ def ScrapComment(url):
             """)
         driver.execute_script(f"window.scrollTo({prev_h},{prev_h + 200})")
         # fix the time sleep value according to your network connection
+        # more_buttons = driver.find_elements(By.XPATH, "//*[@id='more']/span")  # finding "Read more" buttons
+        # for i in more_buttons:
+        #     if i.text == 'Read more':  # clicking the read more  buttons only
+        #         time.sleep(2)
+        #         i.click()
+
+
+
+
+
         time.sleep(1)
         prev_h += 400
         print(prev_h)
@@ -285,27 +295,28 @@ def ScrapComment(url):
     time_array = []
     i = 0
     for item in comment_div_array:
-        timestamp = re.findall("[0-9]+[0-9]+[:]+[0-9]+[0-9]" and "[0-9]+[:]+[0-9]+[0-9]", item)
-        if timestamp:
-            if len(time_array) == 0:
-                first_comment = driver.find_element(By.XPATH,
-                                                    "//*[@id='contents']/ytd-comment-thread-renderer[1]")
+        timestamps = re.findall("[0-9]+[0-9]+[:]+[0-9]+[0-9]" and "[0-9]+[:]+[0-9]+[0-9]", item)
+        for timestamp in timestamps:
+            if timestamp:
+                if len(time_array) == 0:
+                    first_comment = driver.find_element(By.XPATH,
+                                                        "//*[@id='contents']/ytd-comment-thread-renderer[1]")
+                    if not os.path.exists(os.getcwd() + "\\screenshots_of_comments\\{}".format(url_id)):
+                        os.makedirs(os.getcwd() + "\\screenshots_of_comments\\{}".format(url_id))
+                    first_comment.screenshot(os.getcwd() + "\\screenshots_of_comments\\{}\\first.png".format(url_id))
+                time_array.append(comment_div_array[i])
+                comment = driver.find_element(By.XPATH, "//*[@id='contents']/ytd-comment-thread-renderer[{}]".format(i + 1))
+
+                time.sleep(2)
                 if not os.path.exists(os.getcwd() + "\\screenshots_of_comments\\{}".format(url_id)):
                     os.makedirs(os.getcwd() + "\\screenshots_of_comments\\{}".format(url_id))
-                first_comment.screenshot(os.getcwd() + "\\screenshots_of_comments\\{}\\first.png".format(url_id))
-            time_array.append(comment_div_array[i])
-            comment = driver.find_element(By.XPATH, "//*[@id='contents']/ytd-comment-thread-renderer[{}]".format(i + 1))
-
-            time.sleep(2)
-            if not os.path.exists(os.getcwd() + "\\screenshots_of_comments\\{}".format(url_id)):
-                os.makedirs(os.getcwd() + "\\screenshots_of_comments\\{}".format(url_id))
-            comment.screenshot(os.getcwd() + "\\screenshots_of_comments\\{}\\screen_{}.png".format(url_id, i + 1))
-            counter_array.append(int(i + 1))
-            print("screenshot saved")
-            i += 1
-        else:
-            counter_array.append(None)
-            i += 1
+                comment.screenshot(os.getcwd() + "\\screenshots_of_comments\\{}\\screen_{}.png".format(url_id, i + 1))
+                counter_array.append(int(i + 1))
+                print("screenshot saved")
+                i += 1
+            else:
+                counter_array.append(None)
+                i += 1
 
     driver.quit()
 
@@ -689,7 +700,7 @@ if __name__ == "__main__":
 #
     #
     load_dotenv()
-    main("https://www.youtube.com/watch?v=PzNP3AHo0FY")
+    main("https://www.youtube.com/watch?v=m5wjIpT3K-I")
 
     # for i in range(0,5):
     #     ScrapComment("https://www.youtube.com/watch?v={}".format(ID[i]))
