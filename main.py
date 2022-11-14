@@ -1,6 +1,4 @@
 from collections import Counter
-
-
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium import webdriver
@@ -10,34 +8,16 @@ import pandas as pd
 import pymongo
 from datetime import datetime
 from pyyoutube import Api
-from googleapiclient.discovery import build
 from dotenv import load_dotenv
 import os
 import re
-import json
 import makeClip
 from scenedetect import open_video, ContentDetector, SceneManager, StatsManager
-
-import webbrowser
-from msal import ConfidentialClientApplication#, PuplicClientApplication
 from pytube import YouTube
 from pytube.cli import on_progress
-import threading
-import msal
 from numify import numify
-
-import sys  # For simplicity, we'll read config file from 1st CLI param sys.argv[1]
 import json
-import logging
-from msal import PublicClientApplication
-import requests
-import msal
 
-from pprint import pprint
-from configparser import ConfigParser
-from os import path
-
-from graph_onedrive import OneDrive
 
 # access_token = generate_access_token(APP_ID, SCOPES)
 # print(access_token)
@@ -188,11 +168,11 @@ def insert_db(data, col):
 
 
 def find_most_common_words(all_words):
-    f = open("C:\\Users\\ffff\\PycharmProjects\\WebScrapping\\stopwords-de-master\\stopwords-de.json", encoding="utf8")
+    f = open("stopwords-de-master\stopwords-de.json", encoding="utf8")
     ger_data = json.load(f)
     f.close()
 
-    f = open("C:\\Users\\ffff\\PycharmProjects\\WebScrapping\\stopwords-en-master\\stopwords-en.json", encoding="utf8")
+    f = open("stopwords-en-master\stopwords-en.json", encoding="utf8")
     eng_data = json.load(f)
     f.close()
 
@@ -213,6 +193,46 @@ def find_most_common_words(all_words):
 
 
 def ScrapComment(url):
+    def find_endtime(starttime, url):
+        begin_of_scenes = find_scenes(os.getcwd() + f"\\Videos\\{url[32:43]}.mp4")
+        global end_time
+        for y in range(len(begin_of_scenes)):
+            if starttime < begin_of_scenes[y]:
+                if (begin_of_scenes[y] - starttime) > 8 and (begin_of_scenes[y] - starttime) < 30:
+                    end_time = begin_of_scenes[y]
+                    break
+            if y + 1 == len(begin_of_scenes):
+                end_time = starttime + 15
+                return end_time
+        return end_time
+    def format_author(author):
+        new_item = author.replace("\n", "")
+        final_item = new_item.replace(" ", "")
+        return final_item
+    def timestamp_string_to_secounds(timestamp):
+        if len(timestamp) == 5:
+             return int(timestamp[0:2]) * 60 + int(timestamp[3:5])
+        elif len(timestamp) == 8:
+            return int(timestamp[0:2]) * 60 + int(timestamp[3:5]) + int(timestamp[6:8])
+
+    def format_likes(like):
+        replace_breaks = like.replace("\n", "")
+        replace_coma = replace_breaks.replace(",", ".")
+        replace_blanks = replace_coma.replace(" ", "")
+
+        if "K" in replace_blanks or "k" in replace_blanks:
+            final_like = numify.numify(replace_blanks)
+            return final_like
+        else:
+            return replace_blanks
+    def format_timestamp(timestamp):
+        to_add_at_start = "0"
+        if len(timestamp) == 5 or len(timestamp) == 8:
+            return timestamp
+        elif len(timestamp) == 4:
+            return "".join((to_add_at_start, timestamp))
+        elif len(timestamp) == 7:
+            return "".join((to_add_at_start, timestamp[0]))
 
     chrome_path = os.getenv("CHROME_PATH")
     url_id = url[32:43]
@@ -279,8 +299,12 @@ def ScrapComment(url):
 
 
 
-    comment_div = soup.select("#content #content-text")  # limit=50 for only top comments
+    comment_div = soup.select("#content #content-text")
+    author_div = soup.select("#header-author #author-text")
+    like_div = soup.select("#toolbar #vote-count-left")# limit=50 for only top comments
     comment_div_array = [x.text for x in comment_div]
+    author_div_array = [x.text for x in author_div]
+    like_div_array = [x.text for x in like_div]
 
 
     title_text_div = soup.select_one('#container h1')
@@ -294,29 +318,41 @@ def ScrapComment(url):
     counter_array = []
     time_array = []
     i = 0
-    for item in comment_div_array:
-        timestamps = re.findall("[0-9]+[0-9]+[:]+[0-9]+[0-9]" and "[0-9]+[:]+[0-9]+[0-9]", item)
-        for timestamp in timestamps:
-            if timestamp:
-                if len(time_array) == 0:
-                    first_comment = driver.find_element(By.XPATH,
-                                                        "//*[@id='contents']/ytd-comment-thread-renderer[1]")
-                    if not os.path.exists(os.getcwd() + "\\screenshots_of_comments\\{}".format(url_id)):
-                        os.makedirs(os.getcwd() + "\\screenshots_of_comments\\{}".format(url_id))
-                    first_comment.screenshot(os.getcwd() + "\\screenshots_of_comments\\{}\\first.png".format(url_id))
-                time_array.append(comment_div_array[i])
-                comment = driver.find_element(By.XPATH, "//*[@id='contents']/ytd-comment-thread-renderer[{}]".format(i + 1))
+    data = {"Comment": None,
+            "Author": None,
+             "Timestamp": None,
+             "Likes": None,
+             "Counter": None,
+             "Starttime": None,
+             "Endtime": None
+             }
 
-                time.sleep(2)
-                if not os.path.exists(os.getcwd() + "\\screenshots_of_comments\\{}".format(url_id)):
-                    os.makedirs(os.getcwd() + "\\screenshots_of_comments\\{}".format(url_id))
-                comment.screenshot(os.getcwd() + "\\screenshots_of_comments\\{}\\screen_{}.png".format(url_id, i + 1))
-                counter_array.append(int(i + 1))
-                print("screenshot saved")
-                i += 1
-            else:
-                counter_array.append(None)
-                i += 1
+    first_comment = driver.find_element(By.XPATH,
+                                        "//*[@id='contents']/ytd-comment-thread-renderer[1]")
+    if not os.path.exists(os.getcwd() + f"\\screenshots_of_comments\\{url_id}"):
+        os.makedirs(os.getcwd() + f"\\screenshots_of_comments\\{url_id}")
+    first_comment.screenshot(os.getcwd() + f"\\screenshots_of_comments\\{url_id}\\first.png")
+
+    for comment, author, like in comment_div_array, author_div_array, like_div_array:
+        timestamps = re.findall("[0-9]+[0-9]+[:]+[0-9]+[0-9]" and "[0-9]+[:]+[0-9]+[0-9]", comment)
+        for timestamp in timestamps:
+            comment_with_timestamp = driver.find_element(By.XPATH, f"//*[@id='contents']/ytd-comment-thread-renderer[{i + 1}]")
+            time.sleep(2)
+            comment_with_timestamp.screenshot(os.getcwd() + f"\\screenshots_of_comments\\{url_id}\\screen_{i + 1}.png")
+            counter_array.append(int(i + 1))
+            print("screenshot saved")
+            i += 1
+
+            data["Comment"] = comment
+            data["Author"] = format_author(author)
+            data["Timestamp"] = format_timestamp(timestamp)
+            data["Likes"] = format_likes(like)
+            data["Counter"] = i + 1
+            data["Starttime"] = timestamp_string_to_secounds(format_timestamp(timestamp))
+            data["Endtime"] = find_endtime(timestamp_string_to_secounds(format_timestamp(timestamp)), url)
+
+            print(data)
+
 
     driver.quit()
 
@@ -324,50 +360,52 @@ def ScrapComment(url):
     timestamp_as_secounds = []
     # time_as_no_Nones = [i for i in timestamp_as_secounds if i is not None]
     # print(time_as_no_Nones)
-    timestamp_array = []
-    # time_no_Nones = [i for i in timestamp_array if i is not None]
-    # print(time_no_Nones)
-    for item in comment_div_array:
-        timestamp = re.findall("[0-9]+[0-9]+[:]+[0-9]+[0-9]" and "[0-9]+[:]+[0-9]+[0-9]", item)
-        if timestamp:
-            if len(timestamp[0]) == 4:
-                to_add = "0"
-                res = "".join((to_add, timestamp[0]))
-            elif len(timestamp[0]) == 7:
-                to_add = "0"
-                res = "".join((to_add, timestamp[0]))
-            else:
-                res = timestamp[0]
-            timestamp_array.append(res)
-        else:
-            timestamp_array.append(None)
+    # timestamp_array = []
+    # # time_no_Nones = [i for i in timestamp_array if i is not None]
+    # # print(time_no_Nones)
+    # for item in comment_div_array:
+    #     timestamp = re.findall("[0-9]+[0-9]+[:]+[0-9]+[0-9]" and "[0-9]+[:]+[0-9]+[0-9]", item)
+    #     if timestamp:
+    #         if len(timestamp[0]) == 4:
+    #             to_add = "0"
+    #             res = "".join((to_add, timestamp[0]))
+    #         elif len(timestamp[0]) == 7:
+    #             to_add = "0"
+    #             res = "".join((to_add, timestamp[0]))
+    #         else:
+    #             res = timestamp[0]
+    #         timestamp_array.append(res)
+    #     else:
+    #         timestamp_array.append(None)
 
-    for i in range(len(timestamp_array)):
-        timestamp = timestamp_array[i]
-        if timestamp == None:
-             timestamp_as_secounds.append(None)
-        elif len(timestamp) == 5:
-            as_secounds = int(timestamp[0:2]) * 60 + int(timestamp[3:5])
-            timestamp_as_secounds.append(as_secounds)
-        elif len(timestamp) == 8:
-            as_secounds = int(timestamp[0:2]) * 60 + int(timestamp[3:5]) + int(timestamp[6:8])
-            timestamp_as_secounds.append(as_secounds)
-        else:
-            timestamp_as_secounds.append(None)
+
+    # for i in range(len(timestamp_array)):
+    #     timestamp = timestamp_array[i]
+    #     if timestamp == None:
+    #          timestamp_as_secounds.append(None)
+    #     elif len(timestamp) == 5:
+    #         as_secounds = int(timestamp[0:2]) * 60 + int(timestamp[3:5])
+    #         timestamp_as_secounds.append(as_secounds)
+    #     elif len(timestamp) == 8:
+    #         as_secounds = int(timestamp[0:2]) * 60 + int(timestamp[3:5]) + int(timestamp[6:8])
+    #         timestamp_as_secounds.append(as_secounds)
+    #     else:
+    #         timestamp_as_secounds.append(None)
+
 
     # -------------------------make $like array-------------------------------
-    like_div = soup.select("#toolbar #vote-count-left")
-    like_div_stripped = []
-    for item in like_div:
-        replace_breaks = item.get_text().replace("\n", "")
-        replace_coma = replace_breaks.replace(",", ".")
-        replace_blanks = replace_coma.replace(" ", "")
 
-        if "K" in replace_blanks or "k" in replace_blanks:
-            final_like = numify.numify(replace_blanks)
-            like_div_stripped.append(int(final_like))
-        else:
-            like_div_stripped.append(int(replace_blanks))
+    like_div_stripped = []
+    # for item in like_div:
+    #     replace_breaks = item.get_text().replace("\n", "")
+    #     replace_coma = replace_breaks.replace(",", ".")
+    #     replace_blanks = replace_coma.replace(" ", "")
+    #
+    #     if "K" in replace_blanks or "k" in replace_blanks:
+    #         final_like = numify.numify(replace_blanks)
+    #         like_div_stripped.append(int(final_like))
+    #     else:
+    #         like_div_stripped.append(int(replace_blanks))
 
         # if "K" in final_item:
         #     remove_k = final_item.replace("K", "")
@@ -378,48 +416,54 @@ def ScrapComment(url):
         #     like_div_stripped.append(int(final_item))
 
     # -------------------------make $author array-------------------------------
-    author_div = soup.select("#header-author #author-text")
+
     author_div_stripped = []
-    for item in author_div:
-        new_item = item.get_text().replace("\n", "")
-        final_item = new_item.replace(" ", "")
-        author_div_stripped.append(str(final_item))
+    # for item in author_div:
+    #     new_item = item.get_text().replace("\n", "")
+    #     final_item = new_item.replace(" ", "")
+    #     author_div_stripped.append(str(final_item))
+
+
+
 
     download_yt_video(url)
 
     # -------------------------make $start and endtime arrays-------------------------------
-    begin_of_scenes = find_scenes(os.getcwd() + "\Videos\{}.mp4".format(url[32:43]))
-    start_times = []
-    start_no_Nones  = [i for i in start_times if i is not None]
-    end_times = []
-    end_no_Nones = [i for i in end_times if i is not None]
-    try:
-        for i in range(len(timestamp_as_secounds)):
-            if timestamp_as_secounds[i] == None:
-                start_times.append(None)
-                end_times.append(None)
-                continue
-            for y in range(len(begin_of_scenes)):
-                if timestamp_as_secounds[i] < begin_of_scenes[y]:
-                    if (begin_of_scenes[y] - timestamp_as_secounds[i]) > 8 and (begin_of_scenes[y] - timestamp_as_secounds[i]) < 30:
-                        start_times.append(int(timestamp_as_secounds[i]))
-                        end_times.append(int(begin_of_scenes[y]))
-                        break
-                if y + 1 == len(begin_of_scenes):
-                    start_times.append(int(timestamp_as_secounds[i]))
-                    end_times.append(int(timestamp_as_secounds[i] + 15))
-
-    except:
-        print("get start and endtime error")
 
 
-    data = pd.DataFrame(
-        { "URL": url, "Comment": comment_div_array, "Author": author_div_stripped, "Likes": like_div_stripped,
-         "Timestamp": timestamp_array, "Counter": counter_array, "Starttime": start_times, "Endtime": end_times})
+
+
+    # start_times = []
+    # start_no_Nones  = [i for i in start_times if i is not None]
+    # end_times = []
+    # end_no_Nones = [i for i in end_times if i is not None]
+    # try:
+    #     for i in range(len(timestamp_as_secounds)):
+    #         if timestamp_as_secounds[i] == None:
+    #             start_times.append(None)
+    #             end_times.append(None)
+    #             continue
+    #         for y in range(len(begin_of_scenes)):
+    #             if timestamp_as_secounds[i] < begin_of_scenes[y]:
+    #                 if (begin_of_scenes[y] - timestamp_as_secounds[i]) > 8 and (begin_of_scenes[y] - timestamp_as_secounds[i]) < 30:
+    #                     start_times.append(int(timestamp_as_secounds[i]))
+    #                     end_times.append(int(begin_of_scenes[y]))
+    #                     break
+    #             if y + 1 == len(begin_of_scenes):
+    #                 start_times.append(int(timestamp_as_secounds[i]))
+    #                 end_times.append(int(timestamp_as_secounds[i] + 15))
+
+    # except:
+    #     print("get start and endtime error")
+
+
+    # data = pd.DataFrame(
+    #     { "URL": url, "Comment": comment_div_array, "Author": author_div_stripped, "Likes": like_div_stripped,
+    #      "Timestamp": timestamp_array, "Counter": counter_array, "Starttime": start_times, "Endtime": end_times})
     # print(data)
-    insert_db(data, "comments")
-    sorted_data = data.sort_values(by="Likes", ascending=False)
-    # print(sorted_data[0:10])
+    # insert_db(data, "comments")
+    # sorted_data = data.sort_values(by="Likes", ascending=False)
+    # # print(sorted_data[0:10])
 
     # timestamp_df = data.loc[data['Timestamp'].notnull()]
     #
@@ -700,7 +744,7 @@ if __name__ == "__main__":
 #
     #
     load_dotenv()
-    main("https://www.youtube.com/watch?v=m5wjIpT3K-I")
+    main("https://www.youtube.com/watch?v=Z0LAAkP73tU")
 
     # for i in range(0,5):
     #     ScrapComment("https://www.youtube.com/watch?v={}".format(ID[i]))
