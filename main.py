@@ -291,7 +291,7 @@ def ScrapComment(url):
     insert_db(most_common, "mostcommon")
 
     # -------------------------make $screenshots of timestamp comments-------------------------------
-    counter_array = []
+    counter_array = []#er
     time_array = []
     i = 0
     for item in comment_div_array:
