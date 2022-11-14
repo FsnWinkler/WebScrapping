@@ -20,7 +20,18 @@ from pytube.cli import on_progress
 from scenedetect import open_video, ContentDetector, SceneManager, StatsManager
 import pandas as pd
 import os.path
+from main import connenct_db
 import collections
+
+def update_db(data, col):
+    db = connenct_db()
+    if col == "comments":
+        collection = db[col]
+        old_data = collection.find_one_and_update(
+            {'Timestamp': data['Timestamp']},
+            {'$set': {'src_url': data['src_url']}})
+
+        print(f"succsessfully  inserted src_url {data} to {old_data}")
 
 def cut_video(url):
     load_dotenv()
@@ -276,7 +287,7 @@ def write_url(clipname):
         file.write("\n" + current_time + " " + clipname)
 
 def delete_all(folder):
-    folder_path = os.getcwd()+"\\{}".format(folder)
+    folder_path = os.getcwd()+f"\\{folder}"
     for file_object in os.listdir(folder_path):
         file_object_path = os.path.join(folder_path, file_object)
         if os.path.isfile(file_object_path) or os.path.islink(file_object_path):
