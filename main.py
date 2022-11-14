@@ -17,6 +17,7 @@ from pytube import YouTube
 from pytube.cli import on_progress
 from numify import numify
 import json
+import urllib3
 
 
 # access_token = generate_access_token(APP_ID, SCOPES)
@@ -48,6 +49,37 @@ import json
 # print(response_upload_session.json())
 #
 #
+def find_scenes(video_path):
+    video_stream = open_video(video_path)
+    stats_manager = StatsManager()
+    # Construct our SceneManager and pass it our StatsManager.
+    scene_manager = SceneManager(stats_manager)
+
+    # Add ContentDetector algorithm (each detector's constructor
+    # takes various options, e.g. threshold).
+    scene_manager.add_detector(ContentDetector(threshold=55.0))
+
+    # Save calculated metrics for each frame to {VIDEO_PATH}.stats.csv.
+    stats_file_path = '%s.stats.csv' % video_path
+
+    # Perform scene detection.
+    scene_manager.detect_scenes(video=video_stream, show_progress=True)
+    scene_list = scene_manager.get_scene_list()
+    # for i, scene in enumerate(scene_list):
+    #     print(
+    #         'Scene %2d: Start %s / Frame %d, End %s / Frame %d' % (
+    #         i+1,
+    #         scene[0].get_timecode(), scene[0].get_frames(),
+    #         scene[1].get_timecode(), scene[1].get_frames(),))
+
+    begin_of_scenes = []
+    for i in range(len(scene_list)):
+        as_timecode = str(scene_list[i][0])[3:8]
+        as_secounds = int(as_timecode[0:2]) * 60 + int(as_timecode[3:5])
+
+        begin_of_scenes.append(as_secounds)
+
+    return begin_of_scenes
 
 
 
@@ -106,8 +138,10 @@ def connenct_db():
 
                 os.getenv("DB_KEY"))
             db = cluster["test"]
+            print("connected to DB")
             return db
         except:
+            print("cant connect to DB try again...")
             time.sleep(20)
             i += 1
 
@@ -136,6 +170,28 @@ def insert_db(data, col):
                 # record_to_insert = data.loc[i].to_dict("list")
                 collection.insert_one(data.iloc[i].to_dict())
                 print("succsessfully inserted {}  into database".format(data.iloc[i]))
+
+    if col == "timestamp_comments":
+        collection = db[col]
+
+        if collection.find_one({"Comment": data["Comment"]}):
+            dataset = collection.find_one({"Comment": data["Comment"]})
+            if dataset.get("Counter") != data["Counter"]:
+                new_counter = {"$set": {"Counter": data["Counter"]}}
+                collection.update_one(dataset, new_counter)
+                print(f"succsessfully  updated Counter {dataset} to {new_counter}  into database")
+
+            if dataset.get("Likes") < data["Likes"]:
+                newvalues = {"$set": {"Likes": data["Likes"]}}
+                collection.update_one(dataset, newvalues)
+                print(f"succsessfully  updated Likes {dataset} to {newvalues}  into database")
+            else:
+                print("Likes are up to date!")
+
+        else:
+            # record_to_insert = data.loc[i].to_dict("list")
+            collection.insert_one(data)
+            print(f"succsessfully inserted {data}  into database")
 
     if col == "mostcommon":
         collection = db[col]
@@ -193,18 +249,17 @@ def find_most_common_words(all_words):
 
 
 def ScrapComment(url):
-    def find_endtime(starttime, url):
-        begin_of_scenes = find_scenes(os.getcwd() + f"\\Videos\\{url[32:43]}.mp4")
-        global end_time
+    def find_endtime(starttime, begin_of_scenes):
         for y in range(len(begin_of_scenes)):
             if starttime < begin_of_scenes[y]:
                 if (begin_of_scenes[y] - starttime) > 8 and (begin_of_scenes[y] - starttime) < 30:
                     end_time = begin_of_scenes[y]
-                    break
+                    return end_time
+
             if y + 1 == len(begin_of_scenes):
                 end_time = starttime + 15
                 return end_time
-        return end_time
+
     def format_author(author):
         new_item = author.replace("\n", "")
         final_item = new_item.replace(" ", "")
@@ -242,6 +297,7 @@ def ScrapComment(url):
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument(f"user-data-dir={chrome_path}")
     options.add_argument("profile-directory=Default")
+    options.add_argument('--force-dark-mode')
     # options.add_argument("--start-maximized")
     driver = webdriver.Chrome('./chromedriver', options=options)
 
@@ -333,7 +389,11 @@ def ScrapComment(url):
         os.makedirs(os.getcwd() + f"\\screenshots_of_comments\\{url_id}")
     first_comment.screenshot(os.getcwd() + f"\\screenshots_of_comments\\{url_id}\\first.png")
 
-    for comment, author, like in comment_div_array, author_div_array, like_div_array:
+    download_yt_video(url)
+    time.sleep(5)
+    begin_of_scenes = find_scenes(os.getcwd() + f"\\Videos\\{url[32:43]}.mp4")
+
+    for (comment, author, like) in zip(comment_div_array, author_div_array, like_div_array):
         timestamps = re.findall("[0-9]+[0-9]+[:]+[0-9]+[0-9]" and "[0-9]+[:]+[0-9]+[0-9]", comment)
         for timestamp in timestamps:
             comment_with_timestamp = driver.find_element(By.XPATH, f"//*[@id='contents']/ytd-comment-thread-renderer[{i + 1}]")
@@ -341,7 +401,7 @@ def ScrapComment(url):
             comment_with_timestamp.screenshot(os.getcwd() + f"\\screenshots_of_comments\\{url_id}\\screen_{i + 1}.png")
             counter_array.append(int(i + 1))
             print("screenshot saved")
-            i += 1
+
 
             data["Comment"] = comment
             data["Author"] = format_author(author)
@@ -349,11 +409,12 @@ def ScrapComment(url):
             data["Likes"] = format_likes(like)
             data["Counter"] = i + 1
             data["Starttime"] = timestamp_string_to_secounds(format_timestamp(timestamp))
-            data["Endtime"] = find_endtime(timestamp_string_to_secounds(format_timestamp(timestamp)), url)
+            data["Endtime"] = find_endtime(timestamp_string_to_secounds(format_timestamp(timestamp)), begin_of_scenes)
 
             print(data)
+            insert_db(data, "timestamp_comments")
 
-
+        i += 1
     driver.quit()
 
     # -------------------------make $timestamp array-------------------------------
@@ -426,7 +487,7 @@ def ScrapComment(url):
 
 
 
-    download_yt_video(url)
+
 
     # -------------------------make $start and endtime arrays-------------------------------
 
@@ -484,23 +545,23 @@ def ScrapComment(url):
     # print(len(comment_list))
 
 def download_yt_video(url):
-    try:
-        if os.path.exists(os.getcwd()+"\\Videos\\" + url[32:43] + ".mp4"):
-            print("Video already exists")
-            pass
-        else:
-            yt = YouTube(url, on_progress_callback=on_progress)
-            stream = yt.streams.get_highest_resolution()
-            print(stream.filesize_approx)
-            stream.download(os.getcwd()+"\\Videos", filename=url[32:43] + ".mp4")
-            print('Download Completed!' + stream.title)
+    #try:
+    if os.path.exists(os.getcwd()+"\\Videos\\" + url[32:43] + ".mp4"):
+        print("Video already exists")
+        pass
+    else:
+        yt = YouTube(url, on_progress_callback=on_progress)
+        stream = yt.streams.get_highest_resolution()
+        print(stream.filesize_approx)
+        stream.download(os.getcwd()+"\\Videos", filename=url[32:43] + ".mp4")
+        print('Download Completed!' + stream.title)
 
                 #if os.path.exists(os.getcwd()+"\Videos" + url[32:43] + ".mp4"):
 
 
 
-    except:
-        print("download error")
+    # except:
+    #     print("download error")
 
 # def get_startTime_and_endTime(url):
 #     load_dotenv()
@@ -616,37 +677,7 @@ def download_yt_video(url):
 #             print("succsessfully inserted {}  into database".format(final_df.iloc[i]))
 
 
-def find_scenes(video_path):
-    video_stream = open_video(video_path)
-    stats_manager = StatsManager()
-    # Construct our SceneManager and pass it our StatsManager.
-    scene_manager = SceneManager(stats_manager)
 
-    # Add ContentDetector algorithm (each detector's constructor
-    # takes various options, e.g. threshold).
-    scene_manager.add_detector(ContentDetector(threshold=55.0))
-
-    # Save calculated metrics for each frame to {VIDEO_PATH}.stats.csv.
-    stats_file_path = '%s.stats.csv' % video_path
-
-    # Perform scene detection.
-    scene_manager.detect_scenes(video=video_stream, show_progress=True)
-    scene_list = scene_manager.get_scene_list()
-    # for i, scene in enumerate(scene_list):
-    #     print(
-    #         'Scene %2d: Start %s / Frame %d, End %s / Frame %d' % (
-    #         i+1,
-    #         scene[0].get_timecode(), scene[0].get_frames(),
-    #         scene[1].get_timecode(), scene[1].get_frames(),))
-
-    begin_of_scenes = []
-    for i in range(len(scene_list)):
-        as_timecode = str(scene_list[i][0])[3:8]
-        as_secounds = int(as_timecode[0:2]) * 60 + int(as_timecode[3:5])
-
-        begin_of_scenes.append(as_secounds)
-
-    return begin_of_scenes
 
 
 def get_youtube_urls():
@@ -745,6 +776,7 @@ if __name__ == "__main__":
     #
     load_dotenv()
     main("https://www.youtube.com/watch?v=Z0LAAkP73tU")
+    #download_yt_video("https://www.youtube.com/watch?v=Z0LAAkP73tU")
 
     # for i in range(0,5):
     #     ScrapComment("https://www.youtube.com/watch?v={}".format(ID[i]))

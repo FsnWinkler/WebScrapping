@@ -8,19 +8,19 @@ import requests
 from dotenv import load_dotenv
 import os
 import pymongo
-from pytube import YouTube
-from moviepy.editor import *
+#from pytube import YouTube
+#from moviepy.editor import *
 import cv2
-import moviepy.editor as mp
+#import moviepy.editor as mp
 import re
-from moviepy.editor import VideoFileClip
+#from moviepy.editor import VideoFileClip
 import time
 from datetime import datetime
-from pytube.cli import on_progress
-from scenedetect import open_video, ContentDetector, SceneManager, StatsManager
-import pandas as pd
+#from pytube.cli import on_progress
+
+#import pandas as pd
 import os.path
-import collections
+#import collections
 
 def cut_video(url):
     load_dotenv()
