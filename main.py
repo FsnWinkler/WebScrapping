@@ -189,6 +189,11 @@ def insert_db(data, col):
                 print("Likes are up to date!")
 
         else:
+            if "_id" in data.keys():
+                print("true")
+                del data["_id"]
+
+
             # record_to_insert = data.loc[i].to_dict("list")
             collection.insert_one(data)
             print(f"succsessfully inserted {data}  into database")
@@ -375,6 +380,7 @@ def ScrapComment(url):
     time_array = []
     i = 0
     data = {"Comment": None,
+            "URL": None,
             "Author": None,
              "Timestamp": None,
              "Likes": None,
@@ -410,9 +416,11 @@ def ScrapComment(url):
             data["Counter"] = i + 1
             data["Starttime"] = timestamp_string_to_secounds(format_timestamp(timestamp))
             data["Endtime"] = find_endtime(timestamp_string_to_secounds(format_timestamp(timestamp)), begin_of_scenes)
+            data["URL"] = url
 
             print(data)
             insert_db(data, "timestamp_comments")
+            time.sleep(1)
 
         i += 1
     driver.quit()
