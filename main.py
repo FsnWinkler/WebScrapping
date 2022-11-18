@@ -376,8 +376,7 @@ def ScrapComment(url):
     insert_db(most_common, "mostcommon")
 
     # -------------------------make $screenshots of timestamp comments-------------------------------
-    counter_array = []
-    time_array = []
+
     i = 0
     data = {"Comment": None,
             "URL": None,
@@ -405,7 +404,6 @@ def ScrapComment(url):
             comment_with_timestamp = driver.find_element(By.XPATH, f"//*[@id='contents']/ytd-comment-thread-renderer[{i + 1}]")
             time.sleep(2)
             comment_with_timestamp.screenshot(os.getcwd() + f"\\screenshots_of_comments\\{url_id}\\screen_{i + 1}.png")
-            counter_array.append(int(i + 1))
             print("screenshot saved")
 
 

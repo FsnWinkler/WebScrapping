@@ -11,9 +11,9 @@ import pymongo
 #from pytube import YouTube
 #from moviepy.editor import *
 import cv2
-#import moviepy.editor as mp
+import moviepy.editor as mp
 import re
-#from moviepy.editor import VideoFileClip
+from moviepy.editor import VideoFileClip
 import time
 from datetime import datetime
 #from pytube.cli import on_progress
@@ -96,6 +96,18 @@ def get_length(filename):
 #     except:
 #         print("download error")
 
+
+def insert_db(src_link, url, counter):
+    load_dotenv()
+    cluster = pymongo.MongoClient(
+
+        os.getenv("DB_KEY"))
+    db = cluster["test"]
+    print("connected to DB")
+    collection = db["timestamp_comments"]
+    collection.update_one({"$and": [{"URL": url}, {"Counter": counter}]}, {"$push": {"src_link": src_link}})
+    print(f"sucssesfully inserted {src_link} into db")
+
 def add_screen_to_clip(url, counter, i, timestamp):
     video = mp.VideoFileClip(os.getcwd()+"\Clips\clip_{}_{}.mp4".format(url, counter))
 
@@ -128,11 +140,13 @@ def add_screen_to_clip(url, counter, i, timestamp):
         final.write_videofile(clipname, fps=60, codec="libx264")
         folder_id = os.getenv("FOLDER_ID_MOST_LIKED")
         src_link = upload_to_onedrive(clipname, f"https://www.youtube.com/watch?v={url}", timestamp, folder_id)
+        insert_db(src_link, url, counter)
     else:
         clipname = PATH + rf"\Clips_Final\Trends\clip_{url}_{counter}.mp4"
         final.write_videofile(clipname, fps=60, codec="libx264")
         folder_id = os.getenv("FOLDER_ID_CLIPS")
         src_link = upload_to_onedrive(clipname, f"https://www.youtube.com/watch?v={url}", timestamp, folder_id)
+        insert_db(src_link, url, counter)
 
 
     print(f"*********{src_link}*********")
