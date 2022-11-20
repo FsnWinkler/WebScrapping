@@ -17,38 +17,8 @@ from pytube import YouTube
 from pytube.cli import on_progress
 from numify import numify
 import json
-import urllib3
 
 
-# access_token = generate_access_token(APP_ID, SCOPES)
-# print(access_token)
-# headers = {
-#     "Authorization": "Bearer " + access_token["access_token"]
-# }
-#
-# file_path = "Most_Liked_Clips/clip_S4k25zoxTTE.mp4"
-#
-# with open(file_path, "rb")as upload:
-#     media_content = upload.read()
-#
-# folder_id = "C1A80FF9BCE33DB6"
-# file_name = os.path.basename(file_path)
-#
-# request_body = {
-#     "item": {
-#         "description": "vid1",
-#         "name": file_name
-#     }
-# }
-#
-# response_upload_session = requests.post(
-#     "https://graph.microsoft.com/v1.0" + f"/me/drive/items/{folder_id}:/{file_name}:/createUploadSession",
-#     headers=headers,
-#     json=request_body
-# )
-# print(response_upload_session.json())
-#
-#
 def find_scenes(video_path):
     video_stream = open_video(video_path)
     stats_manager = StatsManager()
@@ -80,7 +50,6 @@ def find_scenes(video_path):
         begin_of_scenes.append(as_secounds)
 
     return begin_of_scenes
-
 
 
 def Scrap_Trends_for_URLS():
@@ -129,7 +98,7 @@ def Scrap_Trends_for_URLS():
     return urls
 
 
-def connenct_db():
+def connect_db():
     i = 0
     while i < 50:
         try:
@@ -147,7 +116,7 @@ def connenct_db():
 
 
 def insert_db(data, col):
-    db = connenct_db()
+    db = connect_db()
 
     if col == "comments":
         collection = db[col]
@@ -410,7 +379,7 @@ def ScrapComment(url):
             data["Comment"] = comment
             data["Author"] = format_author(author)
             data["Timestamp"] = format_timestamp(timestamp)
-            data["Likes"] = format_likes(like)
+            data["Likes"] = int(format_likes(like))
             data["Counter"] = i + 1
             data["Starttime"] = timestamp_string_to_secounds(format_timestamp(timestamp))
             data["Endtime"] = find_endtime(timestamp_string_to_secounds(format_timestamp(timestamp)), begin_of_scenes)
