@@ -28,7 +28,11 @@ def cut_video(url):
         print("no entrys found in db")
     duration = get_length(os.getcwd()+f"\Videos\{url[32:43]}.mp4")
     sorted_data = sorted(all_data, key=lambda d: d['Likes'], reverse=True)
-    for i in range(5):
+    if len(sorted_data) > 6:
+        runs = 5
+    else:
+        runs = len(sorted_data)
+    for i in range(runs):
         if sorted_data[i]["Starttime"] > round(duration)-1:
             continue
 
@@ -189,7 +193,10 @@ def get_src_link(itemname, folder_id):
         headers=headers,
         json=request_body
     )
-    return response_get_emb.json()["link"]["webUrl"].replace("embed", "download")
+    try:
+        return response_get_emb.json()["link"]["webUrl"].replace("embed", "download")
+    except:
+        return None
 
 
 def write_url(clipname):

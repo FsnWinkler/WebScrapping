@@ -348,6 +348,7 @@ def ScrapComment(url):
 
     i = 0
     data = {"Comment": None,
+            "Title": None,
             "URL": None,
             "Author": None,
              "Timestamp": None,
@@ -384,6 +385,7 @@ def ScrapComment(url):
             data["Starttime"] = timestamp_string_to_secounds(format_timestamp(timestamp))
             data["Endtime"] = find_endtime(timestamp_string_to_secounds(format_timestamp(timestamp)), begin_of_scenes)
             data["URL"] = url
+            data["Title"] = title
 
             print(data)
             insert_db(data, "timestamp_comments")
@@ -743,14 +745,14 @@ if __name__ == "__main__":
 # #         main("https://www.youtube.com/watch?v={}".format(get_youtube_urls()[i]))
 #
 #
-#
-# #     urls = Scrap_Trends_for_URLS()
-# #     for i in range(len(urls)):
-# #         main("https://www.youtube.com{}".format(urls[i]))
-#
-    #
     load_dotenv()
-    main("https://www.youtube.com/watch?v=Z0LAAkP73tU")
+    urls = Scrap_Trends_for_URLS()
+    for i in range(len(urls)):
+        main("https://www.youtube.com{}".format(urls[i]))
+#
+    # #
+    # load_dotenv()
+    # main("https://www.youtube.com/watch?v=Z0LAAkP73tU")
     #download_yt_video("https://www.youtube.com/watch?v=Z0LAAkP73tU")
 
     # for i in range(0,5):
