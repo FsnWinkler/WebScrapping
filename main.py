@@ -1,4 +1,8 @@
 from collections import Counter
+from difflib import SequenceMatcher
+
+from PIL import Image
+import pytesseract
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium import webdriver
@@ -17,7 +21,7 @@ from pytube import YouTube
 from pytube.cli import on_progress
 from numify import numify
 import json
-
+import Comment
 
 def find_scenes(video_path):
     video_stream = open_video(video_path)
@@ -143,29 +147,29 @@ def insert_db(data, col):
     if col == "timestamp_comments":
         collection = db[col]
 
-        if collection.find_one({"Comment": data["Comment"]}):
-            dataset = collection.find_one({"Comment": data["Comment"]})
-            if dataset.get("Counter") != data["Counter"]:
-                new_counter = {"$set": {"Counter": data["Counter"]}}
+        if collection.find_one({"Comment": data.comment}):
+            dataset = collection.find_one({"Comment": data.comment})
+            if dataset.get("Counter") != data.counter:
+                new_counter = {"$set": {"Counter": data.counter}}
                 collection.update_one(dataset, new_counter)
                 print(f"succsessfully  updated Counter {dataset} to {new_counter}  into database")
 
-            if dataset.get("Likes") < data["Likes"]:
-                newvalues = {"$set": {"Likes": data["Likes"]}}
+            if dataset.get("Likes") < data.likes:
+                newvalues = {"$set": {"Likes": data.likes}}
                 collection.update_one(dataset, newvalues)
                 print(f"succsessfully  updated Likes {dataset} to {newvalues}  into database")
             else:
                 print("Likes are up to date!")
 
         else:
-            if "_id" in data.keys():
-                print("true")
-                del data["_id"]
+            # if "_id" in data.keys():
+            #     print("true")
+            #     del data["_id"]
 
 
             # record_to_insert = data.loc[i].to_dict("list")
-            collection.insert_one(data)
-            print(f"succsessfully inserted {data}  into database")
+            collection.insert_one(data.comment_dict)
+            print(f"succsessfully inserted {data.comment_dict}  into database")
 
     if col == "mostcommon":
         collection = db[col]
@@ -195,6 +199,22 @@ def insert_db(data, col):
             print("no timestamps")
 
     print("")
+
+
+def get_screenshot_txt(screenshot_path):
+    screenshot_text = pytesseract.image_to_string(Image.open(screenshot_path))
+    start = "ago"
+    end = "Reply"
+    return screenshot_text.partition(start)[2].partition(end)[0]
+
+def check_screenshot(comment, screenshot_path):
+    def similar(a, b):
+        return SequenceMatcher(None, a, b).ratio()
+    ratio = similar(comment, get_screenshot_txt(screenshot_path))
+    if ratio > 0.4:
+        return True
+    return False
+
 
 
 def find_most_common_words(all_words):
@@ -267,7 +287,7 @@ def ScrapComment(url):
     url_id = url[32:43]
     options = Options()
     options.add_argument('--no-sandbox')
-    options.add_argument("--headless")
+    #options.add_argument("--headless")
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument(f"user-data-dir={chrome_path}")
     options.add_argument("profile-directory=Default")
@@ -347,6 +367,7 @@ def ScrapComment(url):
     # -------------------------make $screenshots of timestamp comments-------------------------------
 
     i = 0
+    y = 0
     data = {"Comment": None,
             "Title": None,
             "URL": None,
@@ -369,27 +390,38 @@ def ScrapComment(url):
     begin_of_scenes = find_scenes(os.getcwd() + f"\\Videos\\{url[32:43]}.mp4")
 
     for (comment, author, like) in zip(comment_div_array, author_div_array, like_div_array):
-        timestamps = re.findall("[0-9]+[0-9]+[:]+[0-9]+[0-9]" and "[0-9]+[:]+[0-9]+[0-9]", comment)
+        timestamp_patterns = r"[0-9]+[0-9]+[:]+[0-9]+[0-9]+[:]+[0-9]+[0-9]|[0-9]+[:]+[0-9]+[0-9]+[:]+[0-9]+[0-9]|[0-9]+[0-9]+[:]+[0-9]+[0-9]|[0-9]+[:]+[0-9]+[0-9]"
+        timestamps = re.findall(timestamp_patterns, comment)
         for timestamp in timestamps:
             comment_with_timestamp = driver.find_element(By.XPATH, f"//*[@id='contents']/ytd-comment-thread-renderer[{i + 1}]")
             time.sleep(2)
-            comment_with_timestamp.screenshot(os.getcwd() + f"\\screenshots_of_comments\\{url_id}\\screen_{i + 1}.png")
+            screen_path = os.getcwd() + f"\\screenshots_of_comments\\{url_id}\\screen_{y + 1}.png"
+
+
+
+            comment_with_timestamp.screenshot(screen_path)
             print("screenshot saved")
+            if check_screenshot(comment, screen_path):
+                print("screen ok")
+
+            full_comment = Comment.Comment(comment, title, url, author, timestamp, like, i, begin_of_scenes)
+
+            # data["Comment"] = comment
+            # data["Author"] = format_author(author)
+            # data["Timestamp"] = format_timestamp(timestamp)
+            # data["Likes"] = int(format_likes(like))
+            # data["Counter"] = i + 1
+            # data["Starttime"] = timestamp_string_to_secounds(format_timestamp(timestamp))
+            # data["Endtime"] = find_endtime(timestamp_string_to_secounds(format_timestamp(timestamp)), begin_of_scenes)
+            # data["URL"] = url
+            # data["Title"] = title
+            #
+            # print(data)
 
 
-            data["Comment"] = comment
-            data["Author"] = format_author(author)
-            data["Timestamp"] = format_timestamp(timestamp)
-            data["Likes"] = int(format_likes(like))
-            data["Counter"] = i + 1
-            data["Starttime"] = timestamp_string_to_secounds(format_timestamp(timestamp))
-            data["Endtime"] = find_endtime(timestamp_string_to_secounds(format_timestamp(timestamp)), begin_of_scenes)
-            data["URL"] = url
-            data["Title"] = title
-
-            print(data)
-            insert_db(data, "timestamp_comments")
+            insert_db(full_comment, "timestamp_comments")
             time.sleep(1)
+            y += 1
 
         i += 1
     driver.quit()
@@ -527,11 +559,18 @@ def download_yt_video(url):
         print("Video already exists")
         pass
     else:
-        yt = YouTube(url, on_progress_callback=on_progress)
-        stream = yt.streams.get_highest_resolution()
-        print(stream.filesize_approx)
-        stream.download(os.getcwd()+"\\Videos", filename=url[32:43] + ".mp4")
-        print('Download Completed!' + stream.title)
+        try:
+            for i in range(5):
+                if os.path.exists(os.getcwd() + "\\Videos\\" + url[32:43] + ".mp4"):
+                    break
+                yt = YouTube(url, on_progress_callback=on_progress)
+                stream = yt.streams.get_highest_resolution()
+                print(stream.filesize_approx)
+                stream.download(os.getcwd()+"\\Videos", filename=url[32:43] + ".mp4")
+                print('Download Completed!' + stream.title)
+                time.sleep(30)
+        except:
+            print("yt download err")
 
                 #if os.path.exists(os.getcwd()+"\Videos" + url[32:43] + ".mp4"):
 
@@ -746,9 +785,10 @@ if __name__ == "__main__":
 #
 #
     load_dotenv()
-    urls = Scrap_Trends_for_URLS()
-    for i in range(len(urls)):
-        main("https://www.youtube.com{}".format(urls[i]))
+    main("https://www.youtube.com/watch?v=7SNa2uGRShg")
+    # urls = Scrap_Trends_for_URLS()
+    # for i in range(len(urls)):
+    #     main("https://www.youtube.com{}".format(urls[i]))
 #
     # #
     # load_dotenv()
