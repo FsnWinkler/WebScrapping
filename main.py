@@ -404,7 +404,7 @@ def ScrapComment(url):
             if check_screenshot(comment, screen_path):
                 print("screen ok")
 
-            full_comment = Comment.Comment(comment, title, url, author, timestamp, like, i, begin_of_scenes)
+            full_comment = Comment.Comment(comment, title, url, author, timestamp, like, y, begin_of_scenes)
 
             # data["Comment"] = comment
             # data["Author"] = format_author(author)
