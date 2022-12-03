@@ -2,9 +2,8 @@ from numify import numify
 
 
 class Comment:
-    def __init__(self, comment, title, url, author, timestamp, likes, counter, begin_of_scenes):
+    def __init__(self, comment, url, author, timestamp, likes, counter, begin_of_scenes, video_dict):
         self.comment = comment
-        self.title = title
         self.url = url
         self.author = format_author(author)
         self.timestamp = format_timestamp(timestamp)
@@ -12,17 +11,19 @@ class Comment:
         self.counter = counter
         self.starttime = timestamp_string_to_secounds(format_timestamp(timestamp))
         self.endtime = find_endtime(timestamp_string_to_secounds(format_timestamp(timestamp)), begin_of_scenes)
+        self.video_dict = video_dict
         self.comment_dict = {
             "Comment": self.comment,
-             "Title": self.title,
              "URL": self.url,
              "Author": self.author,
              "Timestamp": self.timestamp,
              "Likes": self.likes,
              "Counter": self.counter,
              "Starttime": self.starttime,
-             "Endtime": self.endtime
+             "Endtime": self.endtime,
+             "Video_data" : self.video_dict
         }
+
 
 def find_endtime(starttime, begin_of_scenes):
     for y in range(len(begin_of_scenes)):
@@ -41,9 +42,9 @@ def format_author(author):
     return final_item
 def timestamp_string_to_secounds(timestamp):
     if len(timestamp) == 5:
-         return int(timestamp[0:2]) * 60 + int(timestamp[3:5])
+         return int(int(timestamp[0:2]) * 60 + int(timestamp[3:5]))
     elif len(timestamp) == 8:
-        return int(timestamp[0:2]) * 60 + int(timestamp[3:5]) + int(timestamp[6:8])
+        return int(int(timestamp[0:2]) * 60 + int(timestamp[3:5]) + int(timestamp[6:8]))
 
 def format_likes(like):
     replace_breaks = like.replace("\n", "")

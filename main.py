@@ -22,7 +22,8 @@ from pytube.cli import on_progress
 from numify import numify
 import json
 import Comment
-
+from Comment import timestamp_string_to_secounds
+from Comment import format_timestamp
 def find_scenes(video_path):
     video_stream = open_video(video_path)
     stats_manager = StatsManager()
@@ -258,11 +259,7 @@ def ScrapComment(url):
         new_item = author.replace("\n", "")
         final_item = new_item.replace(" ", "")
         return final_item
-    def timestamp_string_to_secounds(timestamp):
-        if len(timestamp) == 5:
-             return int(timestamp[0:2]) * 60 + int(timestamp[3:5])
-        elif len(timestamp) == 8:
-            return int(timestamp[0:2]) * 60 + int(timestamp[3:5]) + int(timestamp[6:8])
+
 
     def format_likes(like):
         replace_breaks = like.replace("\n", "")
@@ -378,6 +375,18 @@ def ScrapComment(url):
              "Starttime": None,
              "Endtime": None
              }
+    yt = YouTube(url)
+    video_data_dict = {
+        "views": yt.views,
+        "publish_date": yt.publish_date,
+        "age_restricted": yt.age_restricted,
+        "keywords": [yt.keywords],
+        "length": yt.length,
+        "title": yt.title,
+    }
+
+
+
 
     first_comment = driver.find_element(By.XPATH,
                                         "//*[@id='contents']/ytd-comment-thread-renderer[1]")
@@ -393,6 +402,8 @@ def ScrapComment(url):
         timestamp_patterns = r"[0-9]+[0-9]+[:]+[0-9]+[0-9]+[:]+[0-9]+[0-9]|[0-9]+[:]+[0-9]+[0-9]+[:]+[0-9]+[0-9]|[0-9]+[0-9]+[:]+[0-9]+[0-9]|[0-9]+[:]+[0-9]+[0-9]"
         timestamps = re.findall(timestamp_patterns, comment)
         for timestamp in timestamps:
+            if timestamp_string_to_secounds(format_timestamp(timestamp)) > yt.length:
+                continue
             comment_with_timestamp = driver.find_element(By.XPATH, f"//*[@id='contents']/ytd-comment-thread-renderer[{i + 1}]")
             time.sleep(2)
             screen_path = os.getcwd() + f"\\screenshots_of_comments\\{url_id}\\screen_{y + 1}.png"
@@ -404,7 +415,7 @@ def ScrapComment(url):
             if check_screenshot(comment, screen_path):
                 print("screen ok")
 
-            full_comment = Comment.Comment(comment, title, url, author, timestamp, like, i, begin_of_scenes)
+            full_comment = Comment.Comment(comment, url, author, timestamp, like, y, begin_of_scenes, video_data_dict)
 
             # data["Comment"] = comment
             # data["Author"] = format_author(author)
@@ -565,10 +576,12 @@ def download_yt_video(url):
                     break
                 yt = YouTube(url, on_progress_callback=on_progress)
                 stream = yt.streams.get_highest_resolution()
+
                 print(stream.filesize_approx)
                 stream.download(os.getcwd()+"\\Videos", filename=url[32:43] + ".mp4")
                 print('Download Completed!' + stream.title)
                 time.sleep(30)
+                break
         except:
             print("yt download err")
 
