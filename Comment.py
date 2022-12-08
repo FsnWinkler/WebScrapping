@@ -2,7 +2,7 @@ from numify import numify
 
 
 class Comment:
-    def __init__(self, comment, url, author, timestamp, likes, counter, begin_of_scenes, video_dict):
+    def __init__(self, comment, url, author, timestamp, likes, counter, begin_of_scenes, title):
         self.comment = comment
         self.url = url
         self.author = format_author(author)
@@ -11,7 +11,7 @@ class Comment:
         self.counter = counter
         self.starttime = timestamp_string_to_secounds(format_timestamp(timestamp))
         self.endtime = find_endtime(timestamp_string_to_secounds(format_timestamp(timestamp)), begin_of_scenes)
-        self.video_dict = video_dict
+        self.title = title
         self.comment_dict = {
             "Comment": self.comment,
              "URL": self.url,
@@ -21,7 +21,7 @@ class Comment:
              "Counter": self.counter,
              "Starttime": self.starttime,
              "Endtime": self.endtime,
-             "Video_data" : self.video_dict
+             "Title" : self.title
         }
 
 

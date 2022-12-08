@@ -291,21 +291,6 @@ def ScrapComment(url):
     options.add_argument('--force-dark-mode')
     # options.add_argument("--start-maximized")
     driver = webdriver.Chrome('./chromedriver', options=options)
-
-    # driver.get("https://www.youtube.com/watch?v=NLXGrLpJ2dQ")
-    # cookies_path = 'cookie'
-    #
-    # with open(cookies_path, 'r') as file_path:
-    #     cookies_list = json.loads(file_path.read())
-    #
-    # # Once on that domain, start adding cookies into the browser
-    # for cookie in cookies_list:
-    #     # If domain is left in, then in the browser domain gets transformed to f'.{domain}'
-    #     cookie.pop('domain', None)
-    #     driver.add_cookie(cookie)
-    #     print("cookies loaded")
-    # time.sleep(5)
-    # driver.maximize_window()
     driver.get(url)
     time.sleep(5)
     # start_time = datetime.now()
@@ -324,17 +309,6 @@ def ScrapComment(url):
                 return getActualHeight();
             """)
         driver.execute_script(f"window.scrollTo({prev_h},{prev_h + 200})")
-        # fix the time sleep value according to your network connection
-        # more_buttons = driver.find_elements(By.XPATH, "//*[@id='more']/span")  # finding "Read more" buttons
-        # for i in more_buttons:
-        #     if i.text == 'Read more':  # clicking the read more  buttons only
-        #         time.sleep(2)
-        #         i.click()
-
-
-
-
-
         time.sleep(1)
         prev_h += 400
         print(prev_h)
@@ -375,15 +349,7 @@ def ScrapComment(url):
              "Starttime": None,
              "Endtime": None
              }
-    yt = YouTube(url)
-    video_data_dict = {
-        "views": yt.views,
-        "publish_date": yt.publish_date,
-        "age_restricted": yt.age_restricted,
-        "keywords": [yt.keywords],
-        "length": yt.length,
-        "title": yt.title,
-    }
+
 
 
 
@@ -415,7 +381,7 @@ def ScrapComment(url):
             if check_screenshot(comment, screen_path):
                 print("screen ok")
 
-            full_comment = Comment.Comment(comment, url, author, timestamp, like, y, begin_of_scenes, video_data_dict)
+            full_comment = Comment.Comment(comment, url, author, timestamp, like, y, begin_of_scenes, title)
 
             # data["Comment"] = comment
             # data["Author"] = format_author(author)
